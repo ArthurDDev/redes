@@ -34,7 +34,7 @@ typedef struct message message;
 
 // Cria a mensagem no buffer void a partir dos dados da mensagem m.
 // Retorna o tamanho da mensagem inteira em bytes ou -1 em erro
-size_t create_message(message m, void *dest);
+size_t create_message(message m, void **dest);
 
 // Destroi uma mensagem, retorna NULL
 void *delete_message(void *dest);
