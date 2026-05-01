@@ -2,7 +2,6 @@
 #include "sys/socket.h"
 #include <unistd.h>
 
-
 #include "net.h"
 #include "socket.h"
 
@@ -12,11 +11,9 @@ int main()
 
 #ifdef SERVER
 
-    char data[] = "eusouumamensagembemlonga";
-    message m = {24, M_DATA, data};
-    for (int i = 0; i < 20; i ++) {
-        send_message(m);
-    }
+    char data[] = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb";
+    message m = {100, M_DATA, data};
+    send_data(m);
 
 #else
 
@@ -25,7 +22,7 @@ int main()
 
         unsigned char *data = m.data;
 
-        // mensagem em hexa
+        // mensagem em normal
         for (size_t i = 0; i < m.size; i ++)
             printf("%c", data[i]);
         printf("\n");

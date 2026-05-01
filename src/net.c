@@ -2,6 +2,7 @@
 #include "socket.h"
 #include "message.h"
 
+#include <string.h>
 #include <time.h>
 #include <sys/socket.h>
 #include <stdio.h>
@@ -117,7 +118,7 @@ char recieve_ack(char seq)
 
 }
 
-message receive_data()
+message receive_message()
 { //TODO: CRC
   //TODO: Mensagens maiores
   //TODO: Timeout
@@ -149,14 +150,39 @@ message receive_data()
         break;
     }
 
-    printf("Mensagem Recebida com tipo: %d e seq: %d \n", m.type, get_seq(buffer));
-
     if (m.type != M_ACK && m.type != M_NACK)
         send_ack();
 
     increment_seq();
 
     return m;
+}
+
+message receive_data()
+{
+    message m = receive_message();
+
+    if (!(m.type == M_VIS
+        || m.type == M_DATA
+        || m.type == M_TXT
+        || m.type == M_JPG
+        || m.type == M_MP4 )) {
+            return m;
+    }
+
+    message ml = {m.size, m.type, malloc(m.size)};
+    memcpy(ml.data, m.data, m.size);
+    delete_message(&m);
+
+    do {
+        m = receive_message();
+        ml.size += m.size;
+        ml.data = realloc(ml.data, ml.size);
+        memcpy(ml.data + ml.size - m.size, m.data, m.size);
+        delete_message(&m);
+    } while (m.type != M_END);
+
+    return ml;
 }
 
 // IMPLEMENTADO DO JEITO BURRO IDIOTA INEFICIENTE SEM JANELA DESLIZANTE
@@ -198,4 +224,34 @@ char send_message(message m)
 
     return 0;
 
+}
+
+size_t send_data(message m)
+{
+    int64_t size_left = m.size;
+
+    message t;
+    t.data = m.data;
+    do {
+        t.type = m.type;
+        if (size_left > MAX_DATA)
+            t.size = MAX_DATA;
+        else
+            t.size = size_left;
+
+        t.data = &m.data[m.size - size_left];
+
+        send_message(t);
+
+        size_left -= MAX_DATA;
+    } while (size_left > 0);
+
+    if (m.type == M_VIS
+        || m.type == M_DATA
+        || m.type == M_TXT
+        || m.type == M_JPG
+        || m.type == M_MP4)
+        send_message((message){0, M_END, NULL});
+
+    return 1;
 }
