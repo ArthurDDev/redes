@@ -23,7 +23,7 @@ int main()
     unsigned char *x = buffer;
     for (size_t i = 0; i < 24; i ++)
         printf("%x ", x[i]);
-    printf("\n");
+    printf("\nMensagem enviada com sucesso!\n\n");
 
 #else
 
