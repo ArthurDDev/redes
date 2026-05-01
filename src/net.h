@@ -34,4 +34,8 @@ size_t send_data(message m);
 // Recebe mensagens, retorna uma mensagem com tamanho negativo em caso de erro
 message receive_data();
 
+char next_seq();
+
+char get_seq(unsigned char *buffer);
+
 #endif
