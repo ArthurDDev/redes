@@ -12,7 +12,7 @@ int main()
 
 #ifdef SERVER
 
-    char data[] = "eusouumamensagembemlonga";
+    unsigned char data[] = "eusouumamensagembemlonga";
     message m = {20, M_DATA, data};
     send_message(m);
     sleep(1);

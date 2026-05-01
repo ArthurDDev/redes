@@ -4,6 +4,7 @@
 #define __MESSAGE__
 
 #include <stddef.h>
+#include <stdint.h>
 
 // Estrutura do frame:
 //
@@ -50,5 +51,7 @@ void delete_message(message *m);
 // Decodifica a mensagem do buffer src
 // Retorna uma struct com os dados
 message decode_message(void *src);
+
+uint8_t get_crc(const uint8_t *data, size_t size);
 
 #endif
