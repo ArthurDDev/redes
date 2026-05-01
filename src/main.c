@@ -14,8 +14,9 @@ int main()
 
     char data[] = "eusouumamensagembemlonga";
     message m = {24, M_DATA, data};
-    for (int i = 0; i < 20; i ++)
+    for (int i = 0; i < 20; i ++) {
         send_message(m);
+    }
 
 #else
 

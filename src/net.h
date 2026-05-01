@@ -8,6 +8,8 @@
 
 #define MAX_SEQ 8
 #define MIN_SIZE 14
+#define TIMEOUT 2
+#define MAX_TIMEOUT 5
 
 struct connection {
     int socket;

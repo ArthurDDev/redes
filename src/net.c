@@ -2,6 +2,7 @@
 #include "socket.h"
 #include "message.h"
 
+#include <time.h>
 #include <sys/socket.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -26,15 +27,13 @@ int validate_header(unsigned char *buffer)
 
     message m = decode_message(buffer);
 
-    //if (m.type == M_ACK || m.type == M_NACK)
-    //    return 0;
+    if (CON.seq != get_seq(buffer))
+        return 1;
 
     if (buffer[0] == CON.last_message[0] &&
         buffer[1] == CON.last_message[1] &&
         buffer[2] == CON.last_message[2]) {
-    
-        //printf("Header Repetido\n");
-        
+            
         return 1;
 
     }
@@ -85,10 +84,16 @@ char recieve_ack(char seq)
         exit(1);
     }
 
-    printf("Esperando ACK...\n");
+    time_t start_time, current_time;
+    time(&start_time);
     while (1) {
+        time(&current_time);
+        if (current_time - start_time > TIMEOUT) {
+            fprintf(stderr, "timeoutizinho\n");
+            break;
+        }
+
         if (recv(CON.socket, buffer, 64, 0) == -1) {
-            fprintf(stderr, "Erro ao ler frame\n");
             continue;
         }
 
@@ -124,10 +129,9 @@ message receive_data()
         exit(1);
     }
 
-    //printf("Lendo dados...\n");
     while (1) {
+
         if (recv(CON.socket, buffer, 64, 0) == -1) {
-            fprintf(stderr, "Erro ao ler frame\n");
             continue;
         }
 
@@ -150,6 +154,7 @@ message receive_data()
     if (m.type != M_ACK && m.type != M_NACK)
         send_ack();
 
+    increment_seq();
 
     return m;
 }
@@ -162,8 +167,6 @@ char next_seq()
 
 char send_message(message m)
 {
-    increment_seq();
-
     void *buffer;
     size_t siz = create_frame(m, &buffer);
     if (siz < MIN_SIZE) {
@@ -173,8 +176,13 @@ char send_message(message m)
 
     save_header(buffer);
 
+    int timeouts = 0;
     do {
-        //printf("Enviando mensagem com seq: %d\n", get_seq(buffer));
+        timeouts ++;
+        if (timeouts > MAX_TIMEOUT) {
+            fprintf(stderr, "Timeout\n");
+            exit(1);
+        }
         if (send(CON.socket, buffer, siz, 0) == -1) {
             fprintf(stderr, "Erro ao enviar mensagem\n");
             return 1;
@@ -185,6 +193,8 @@ char send_message(message m)
     } while (!recieve_ack(CON.seq));
 
     //delete_message(&r);
+
+    increment_seq();
 
     return 0;
 
