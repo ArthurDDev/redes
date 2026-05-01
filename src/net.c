@@ -18,7 +18,7 @@ void setup_connection(char* interface)
 
 // Compara o cabeçalho é valido
 // Retorna 1 se é inválido, 0 se é válido
-char validate_header(char *buffer)
+int validate_header(unsigned char *buffer)
 {
     if (buffer[0] != 0b01111110)
         return 1;
@@ -34,19 +34,19 @@ char validate_header(char *buffer)
 }
 
 // Salva o cabeçalho da última mensagem lida
-void save_header(char *buffer)
+void save_header(unsigned char *buffer)
 {
     for (int i = 0; i < 3; i ++)
         CON.last_message[i] = buffer[i];
 }
 
-message recieve_data()
+message receive_data()
 { //TODO: CRC
   //TODO: Mensagens maiores
   //TODO: Timeout
     message m;
 
-    char *buffer = malloc(64);
+    unsigned char *buffer = malloc(64);
     if (buffer == NULL) {
         printf("Erro ao alocar memoria\n");
         exit(1);
@@ -102,7 +102,7 @@ char send_message(message m)
     message r;
 
     while (1) {
-        r = recieve_data();
+        r = receive_data();
 
         if (r.type == M_ACK)
             break;

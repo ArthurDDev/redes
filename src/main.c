@@ -21,17 +21,23 @@ int main()
 #else
 
     while (1) {
-       message m = recieve_data();
+       message m = receive_data();
 
-        printf("Mensagem:\nTamanho: %ld | Tipo: %d, Dados:\n", m.size, m.type);
+        printf("Mensagem:\nTamanho: %ld | Tipo: %d | Dados:\n", m.size, m.type);
         unsigned char *data = m.data;
-        for (int i = 0; i < m.size; i ++)
+
+        // mensagem em hexa
+        for (size_t i = 0; i < m.size; i ++)
             printf("%x ", data[i]);
+        printf("\n");
+
+        // mensagem normal
+        for (size_t i = 0; i < m.size; i ++)
+            printf("%c", data[i]);
         printf("\n");
     }
 
 #endif
-
 
     return 0;
 }

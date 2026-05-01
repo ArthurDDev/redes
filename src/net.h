@@ -32,6 +32,6 @@ char send_message(message m);
 size_t send_data(message m);
 
 // Recebe mensagens, retorna uma mensagem com tamanho negativo em caso de erro
-message recieve_data();
+message receive_data();
 
 #endif
