@@ -31,15 +31,13 @@ int main()
 #else
 
     while (1) {
-        char buffer[25];
-        if (recv(CON.socket, &buffer, 24, 0) == -1)
-            printf("Erro\n");
-        else {
-            for (int i = 0; i < 24; i ++)
-                printf("%x ", buffer[i]);
-            printf("\n");
-            break;
-        }
+       message m = recieve_data();
+
+        printf("Mensagem:\nTamanho: %ld | Tipo: %d, Dados:\n", m.size, m.type);
+        unsigned char *data = m.data;
+        for (int i = 0; i < m.size; i ++)
+            printf("%x ", data[i]);
+        printf("\n");
     }
 
 #endif

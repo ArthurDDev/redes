@@ -5,6 +5,11 @@
 
 #include <stddef.h>
 
+// Estrutura do frame:
+//
+// Marcador de Início | Tamanho | Sequencia | Tipo   | Dados   | CRC
+// 1 byte             | 5 bits  | 6 bits    | 5 bits | n bytes | 1 byte
+
 enum message_type {
     M_ACK = 0,
     M_NACK = 1,
@@ -32,15 +37,18 @@ struct message
 };
 typedef struct message message;
 
-// Cria a mensagem no buffer void a partir dos dados da mensagem m.
+// Cria o frame no buffer void a partir dos dados da mensagem m.
 // Retorna o tamanho da mensagem inteira em bytes ou -1 em erro
-size_t create_message(message m, void **dest);
+size_t create_frame(message m, void **dest);
 
-// Destroi uma mensagem, retorna NULL
-void *delete_message(void *dest);
+// Destroi um frame, retorna NULL
+void *delete_frame(void *dest);
 
-// Decodifica a mensagem do buffer src do tamanho tam em bytes
+// Deleta uma mensagem
+void delete_message(message *m);
+
+// Decodifica a mensagem do buffer src
 // Retorna uma struct com os dados
-message decode_message(void *src, size_t tam);
+message decode_message(void *src);
 
 #endif
