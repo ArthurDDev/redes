@@ -23,6 +23,8 @@ char validate_header(char *buffer)
     if (buffer[0] != 0b01111110)
         return 1;
 
+    printf("Header Repitido\n");
+
     if (buffer[0] == CON.last_message[0] &&
         buffer[1] == CON.last_message[1] &&
         buffer[2] == CON.last_message[2])
@@ -68,7 +70,8 @@ message recieve_data()
 
     free(buffer);
 
-    send_message((message){0, M_ACK, NULL});
+    if (m.type == M_ACK || m.type == M_NACK)
+        send_message((message){0, M_ACK, NULL});
 
     return m;
 }
@@ -76,7 +79,7 @@ message recieve_data()
 // IMPLEMENTADO DO JEITO BURRO IDIOTA INEFICIENTE SEM JANELA DESLIZANTE
 char next_seq()
 {
-    return (CON.seq + 1) & MAX_SEQ;
+    return (CON.seq + 1) % MAX_SEQ;
 }
 
 char send_message(message m)
@@ -114,6 +117,7 @@ char send_message(message m)
             return 1;
         }
     }
+    CON.seq ++;
     delete_message(&r);
 
     return 0;
