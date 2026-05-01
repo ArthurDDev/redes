@@ -4,8 +4,8 @@
 #include "files.h"
 
 // falta tratamento de erro
-unsigned char *file_to_buffer(const char *filename, size_t size) {
-    if (!filename || !size){
+unsigned char *file_to_buffer(const char *filename, size_t *size) {
+    if (!filename){
         fprintf(stderr, "Parâmetros incorretos ao ler arquivo para o buffer.\n");
         exit(1);
     }
@@ -15,28 +15,32 @@ unsigned char *file_to_buffer(const char *filename, size_t size) {
         printf("Arquivo inexistente\n");
         exit(1);
     }
+
+    fseek(file, 0, SEEK_END);
+    size_t file_size = ftell(file);
     
-    unsigned char *buffer = malloc(size);
+    unsigned char *buffer = malloc(*size + 1);
     if (!buffer) {
         fprintf(stderr, "Erro ao alocar memória para o buffer.\n");
         exit(1);
     }
 
+    
+    fseek(file, 0, SEEK_SET);
+    
     buffer[0] = filename[0];
-
-    fseek(file, 0, SEEK_END);
-
-    fread(buffer + 1, size, 1, file);
-
+    
+    fread(buffer + 1, file_size, 1, file);
+    
     fclose(file);
 
+    *size = file_size;
     return buffer;
 }
 
-void buffer_to_file(const char *buffer) {
+void buffer_to_file(const char *buffer, size_t size) {
     FILE *file;
     char filename[] = "x.fix";
-    size_t file_size;
 
     filename[0] = buffer[0];
 
@@ -45,14 +49,15 @@ void buffer_to_file(const char *buffer) {
         exit(1);
     }
 
-    file = fopen(filename, "w");
+    for (size_t i = 0; i < size; i ++)
+        printf("%c", buffer[i]);
+    printf("\n");
 
-    fseek(file, 0, SEEK_END);
-    file_size = ftell(file);
+    file = fopen(filename, "w+");
 
-    fwrite(buffer + 1, file_size, 1, file);
+    fseek(file, 0, SEEK_SET);
+
+    fwrite(buffer + 1, size - 1, 1, file);
 
     fclose(file);
-
-    abrir_arquivo();
 }
