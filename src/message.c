@@ -58,7 +58,7 @@ message decode_message(void *src)
         exit(1);
     }
 
-    char *frame = src;
+    unsigned char *frame = src;
     message m;
 
     m.size = frame[1] >> 3;

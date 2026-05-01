@@ -38,7 +38,7 @@ void save_header(char *buffer)
         CON.last_message[i] = buffer[i];
 }
 
-message recieve_data()
+message receive_data()
 { //TODO: CRC
   //TODO: Mensagens maiores
   //TODO: Timeout
@@ -99,7 +99,7 @@ char send_message(message m)
     message r;
 
     while (1) {
-        r = recieve_data();
+        r = receive_data();
 
         if (r.type == M_ACK)
             break;
