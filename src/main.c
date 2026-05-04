@@ -12,19 +12,10 @@ int main()
 
 #ifdef SERVER
 
-    char data[] = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb";
-    message m = {100, M_DATA, data};
-    
     size_t size;
     unsigned char *buffer = file_to_buffer("arthur.txt", &size);
-    message r = {size, M_TXT, buffer};
-
-    for (size_t i = 0; i < r.size; i ++)
-        printf("%c", buffer[i]);
-    printf("\n");
-
-    send_data(r);
-    send_data(m);
+    send_data((message){size, M_TXT, buffer});
+    
 
 #else
 
