@@ -4,6 +4,7 @@
 
 #include "net.h"
 #include "socket.h"
+#include "files.h"
 
 int main()
 {
@@ -11,9 +12,10 @@ int main()
 
 #ifdef SERVER
 
-    char data[] = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb";
-    message m = {100, M_DATA, data};
-    send_data(m);
+    size_t size;
+    unsigned char *buffer = file_to_buffer("arthur.txt", &size);
+    send_data((message){size, M_TXT, buffer});
+    
 
 #else
 
@@ -22,6 +24,8 @@ int main()
 
         unsigned char *data = m.data;
 
+        buffer_to_file(m.data, m.size);
+        
         // mensagem em normal
         for (size_t i = 0; i < m.size; i ++)
             printf("%c", data[i]);
