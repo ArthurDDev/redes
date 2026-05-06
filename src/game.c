@@ -82,7 +82,7 @@ game make_game(const char *map)
         for (int j = 0; j < 64; j ++)
             g.board[i][j] = ufpr_board[i][j];
 
-    g.light_level = 1;
+    g.light_level = 3;
     g.player_pos = (point){2, 2};
 
     return g;
@@ -113,13 +113,16 @@ void server_game_loop()
 
 void send_board(game g)
 {
+    //printf("S1\n");
+
     int width = g.light_level * 2 + 1;
-    char *buffer = malloc(width * width);
+    int area = width * width;
+    unsigned char *buffer = malloc(area);
 
     int buffer_ptr = 0;
-    for (int i = g.player_pos.x - g.light_level; i <= width; i ++)
-        for (int j = g.player_pos.y - g.light_level; j <= width; j ++) {
-            if (i > 0 && i < 64 && j > 0 && j < 64)
+    for (int i = g.player_pos.x - g.light_level; i < g.player_pos.x - g.light_level + width; i ++)
+        for (int j = g.player_pos.y - g.light_level; j < g.player_pos.y - g.light_level + width; j ++) {
+            if (i >= 0 && i < 64 && j >= 0 && j < 64)
                 buffer[buffer_ptr++] = g.board[i][j];
             else
                 buffer[buffer_ptr++] = 'X';
@@ -135,31 +138,43 @@ void client_game_loop()
     while (1) {
         message m;
         do {
+            printf("Recebendo tabuleiro\n");
             m = receive_data();
         } while (m.type != M_VIS);
 
         render_board(m.data, m.size);
 
         char move;
-        scanf("%c", &move);
+        int valid;
+        do {
+            printf("Digite o movimento:  \n");
+            scanf("%c ", &move);
 
-        switch(move) {
-            case 'w':
-                send_message((message){0, M_UP, NULL});
-                break;
+            valid = 0;
+            switch(move) {
+                case 'w':
+                    send_message((message){0, M_UP, NULL});
+                    valid = 1;
+                    break;
+                
+                case 's':
+                    send_message((message){0, M_DOWN, NULL});
+                    valid = 1;
+                    break;
             
-            case 's':
-                send_message((message){0, M_DOWN, NULL});
-                break;
+                case 'a':
+                    send_message((message){0, M_LEFT, NULL});
+                    valid = 1;
+                    break;
         
-            case 'a':
-                send_message((message){0, M_LEFT, NULL});
-                break;
-    
-            case 'd':
-                send_message((message){0, M_RIGHT, NULL});
-                break;
-        }
+                case 'd':
+                    send_message((message){0, M_RIGHT, NULL});
+                    valid = 1;
+                    break;
+            }
+
+            break;
+        } while (valid == 0);
     }
 }
 

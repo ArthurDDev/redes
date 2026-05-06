@@ -25,9 +25,9 @@ int validate_header(unsigned char *buffer)
     if (buffer[0] != 0b01111110)
         return 1;
 
-
+    printf("V2\n");
     message m = decode_message(buffer);
-
+    printf("v3\n");
     if (CON.seq != get_seq(buffer))
         return 1;
 
@@ -78,13 +78,13 @@ char get_seq(unsigned char *buffer)
 char recieve_ack(char seq)
 {
     message m;
-
-    unsigned char *buffer = malloc(64);
+    printf("R1\n");
+    unsigned char buffer[128];
     if (buffer == NULL) {
         printf("Erro ao alocar memoria\n");
         exit(1);
     }
-
+printf("R2\n");
     time_t start_time, current_time;
     time(&start_time);
     while (1) {
@@ -93,27 +93,36 @@ char recieve_ack(char seq)
             fprintf(stderr, "timeoutizinho\n");
             break;
         }
-
+printf("R3\n");
         if (recv(CON.socket, buffer, 64, 0) == -1) {
             continue;
         }
+printf("R3,1\n");
 
         if (validate_header(buffer))
             continue;
+printf("R3,2\n");
 
-        save_header(buffer);
+        //save_header(buffer);
         m = decode_message(buffer);
-
-        if (get_seq(buffer) != seq)
+printf("R4\n");
+        if (get_seq(buffer) != seq) {
+            delete_message(&m);
             continue;
+        }
 
-        if (m.type == M_ACK)
+        if (m.type == M_ACK) {
+            delete_message(&m);
             return 1;
+        }
 
-        if (m.type == M_NACK)
+        if (m.type == M_NACK) {
+            delete_message(&m);
             return 0;
+        }
     }
-
+printf("R5\n");
+    delete_message(&m);
     return 0;
 
 }
@@ -194,12 +203,13 @@ char next_seq()
 char send_message(message m)
 {
     void *buffer;
+    printf("1\n");
     size_t siz = create_frame(m, &buffer);
     if (siz < MIN_SIZE) {
         buffer = realloc(buffer, MIN_SIZE);
         siz = MIN_SIZE;
     }
-
+    printf("2\n");
     save_header(buffer);
 
     int timeouts = 0;
@@ -216,8 +226,9 @@ char send_message(message m)
 
         if (m.type == M_ACK || m.type == M_NACK)
             return 0;
+        printf("2,5\n");
     } while (!recieve_ack(CON.seq));
-
+    printf("3\n");
     //delete_message(&r);
 
     increment_seq();
@@ -241,6 +252,7 @@ size_t send_data(message m)
 
         t.data = &m.data[m.size - size_left];
 
+        printf("Enviando mensagem\n");
         send_message(t);
 
         size_left -= MAX_DATA;

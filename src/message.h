@@ -36,7 +36,7 @@ struct message
 {
     size_t size; // Tamanho dos DADOS em bytes
     char type;  // Tipo conforme o enum
-    char *data; // Buffer de dados
+    unsigned char *data; // Buffer de dados
 };
 typedef struct message message;
 
