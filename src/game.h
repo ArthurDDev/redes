@@ -3,6 +3,8 @@
 
 #include <stddef.h>
 
+#define WIDTH 40
+
 struct point {
     int x, y;
 };
@@ -10,7 +12,7 @@ struct point {
 typedef struct point point;
 
 struct game {
-    char board[64][64];
+    char board[WIDTH][WIDTH];
     unsigned char light_level;
     point player_pos;
 };
@@ -33,7 +35,7 @@ point get_element(char el);
 // CLIENTE
 void client_game_loop();
 
-void render_board(char *board, size_t size);
+void render_board(unsigned char *board, size_t size);
 
 void move_player(unsigned char dir);
 
