@@ -2,10 +2,11 @@
 #include <stdlib.h>
 #include <string.h>
 #include "files.h"
+#include "message.h"
 
 // falta tratamento de erro
-unsigned char *file_to_buffer(const char *filename, size_t *size) {
-    if (!filename){
+unsigned char *file_to_message(const char *filename, size_t *size) {
+    if (!filename || !size)  {
         fprintf(stderr, "Parâmetros incorretos ao ler arquivo para o buffer.\n");
         exit(1);
     }
@@ -38,26 +39,51 @@ unsigned char *file_to_buffer(const char *filename, size_t *size) {
     return buffer;
 }
 
-void buffer_to_file(const char *buffer, size_t size) {
-    FILE *file;
-    char filename[] = "x.fix";
-
-    filename[0] = buffer[0];
-
-    if (!buffer){
+void message_to_file(message m) {
+    if (!m.data || m.size == 0) {
         fprintf(stderr, "Parâmetros incorretos ao ler buffer para um arquivo.\n");
         exit(1);
     }
 
-    for (size_t i = 0; i < size; i ++)
-        printf("%c", buffer[i]);
+    FILE *file;
+    char filename[] = "default";
+    
+    filename[0] = m.data[0];
+    filename[1] = '.';
+    
+    switch (m.type) {
+        case M_TXT:
+            printf("Criando arquivo .txt\n");
+            filename[2] = 't';
+            filename[3] = 'x';
+            filename[4] = 't';
+            break;
+        case M_JPG:
+            printf("Criando arquivo .jpg\n");
+            filename[2] = 'j';
+            filename[3] = 'p';
+            filename[4] = 'g';
+            break;
+        case M_MP4:
+            printf("Criando arquivo .mp4\n");
+            filename[2] = 'm';
+            filename[3] = 'p';
+            filename[4] = '4';
+            break;
+
+        default:
+            printf("Arquivo de tipo desconhecido\n");
+    }
+
+    for (size_t i = 0; i < m.size; i ++)
+        printf("%c", m.data[i]);
     printf("\n");
 
     file = fopen(filename, "w+");
 
     fseek(file, 0, SEEK_SET);
 
-    fwrite(buffer + 1, size - 1, 1, file);
+    fwrite(m.data + 1, m.size - 1, 1, file);
 
     fclose(file);
 }

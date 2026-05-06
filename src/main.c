@@ -13,8 +13,8 @@ int main()
 #ifdef SERVER
 
     size_t size;
-    unsigned char *buffer = file_to_buffer("arthur.txt", &size);
-    send_data((message){size, M_TXT, buffer});
+    unsigned char *buffer = file_to_message("foto.jpg", &size);
+    send_data((message){size, M_JPG, buffer});
     
 
 #else
@@ -24,8 +24,10 @@ int main()
 
         unsigned char *data = m.data;
 
-        buffer_to_file(m.data, m.size);
-        
+        message_to_file(m);
+        //xdg-open foto.jpg
+        //fork(); //execv
+
         // mensagem em normal
         for (size_t i = 0; i < m.size; i ++)
             printf("%c", data[i]);
