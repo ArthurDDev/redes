@@ -12,4 +12,7 @@ unsigned char *file_to_message(const char *filename, size_t *size);
 // lê um buffer e cria um arquivo 
 void message_to_file(message m);
 
+// abre um arquivo usando o programa padrão do sistema
+void open_file(char *filename);
+
 #endif

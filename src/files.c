@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
+#include <sys/types.h>
 #include "files.h"
 #include "message.h"
 
@@ -91,4 +93,24 @@ void message_to_file(message m) {
     fwrite(m.data + 1, m.size - 1, 1, file);
 
     fclose(file);
+}
+
+void open_file(char *filename)
+{
+    int id = fork();
+
+    if (id < 0) {
+        fprintf(stderr, "Erro ao criar processo filho.\n");
+        return;
+    }
+
+    // isso quer dizer que é o processo filho
+    if (id == 0) {
+        char *args[] = {"/usr/bin/xdg-open", filename, NULL};
+
+        execv(args[0], args);
+
+        fprintf(stderr, "Erro ao abrir arquivo.\n");
+        exit(1);
+    }
 }
