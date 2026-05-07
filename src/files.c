@@ -11,7 +11,7 @@ unsigned char *file_to_message(const char *filename, size_t *size) {
         exit(1);
     }
     
-    FILE *file = fopen(filename, "r");
+    FILE *file = fopen(filename, "rb");
     if (!file){
         printf("Arquivo inexistente\n");
         exit(1);
@@ -30,7 +30,10 @@ unsigned char *file_to_message(const char *filename, size_t *size) {
     
     buffer[0] = filename[0];
     
-    fread(buffer + 1, file_size, 1, file);
+    if(fread(buffer + 1, file_size, 1, file) != 1) {
+        fprintf(stderr, "Erro ao ler arquivo para o buffer.\n");
+        exit(1);
+    }
 
     fclose(file);
 
@@ -46,7 +49,7 @@ void message_to_file(message m) {
     }
 
     FILE *file;
-    char filename[] = "default";
+    char filename[32];
     
     filename[0] = m.data[0];
     filename[1] = '.';
@@ -75,11 +78,13 @@ void message_to_file(message m) {
             printf("Arquivo de tipo desconhecido\n");
     }
 
+    filename[5] = '\0';
+
     for (size_t i = 0; i < m.size; i ++)
-        printf("%c", m.data[i]);
+        printf("%02x ", m.data[i]);
     printf("\n");
 
-    file = fopen(filename, "w+");
+    file = fopen(filename, "wb");
 
     fseek(file, 0, SEEK_SET);
 
