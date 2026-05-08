@@ -25,18 +25,20 @@ char get_pos(int i, int j, game g) {
         return g.board[i][j];
 }
 
-// Função INCOMPLETA Movimento do vermelho
+// Vermelho – regra da mão esquerda
 void red_movement(int i, int j, game g)
 {
     g.board[i][j] = '0';
-    if (get_pos(i + 1, j, g) != '#')
-        g.board[i + 1][j] = 'R';
-    else if (get_pos(i - 1, j, g) != '#')
+
+    if (get_pos(i, j - 1, g) == '0')
+        g.board[i][j - 1] = 'R';
+    else if (get_pos(i - 1, j, g) == '0')
         g.board[i - 1][j] = 'R';
     else
         g.board[i][j] = 'R';
 }
 
+// Verde – alterna direita e esquerda 
 void green_movement(int i, int j, game g)
 {
     g.board[i][j] = '0';
@@ -48,6 +50,7 @@ void green_movement(int i, int j, game g)
         g.board[i][j] = 'G';
 }
 
+// Azul – regra da mão direita
 void blue_movement(int i, int j, game g)
 {
     g.board[i][j] = '0';
@@ -59,6 +62,7 @@ void blue_movement(int i, int j, game g)
         g.board[i][j] = 'B';
 }
 
+// Amarelo – aleatório
 void yellow_movement(int i, int j, game g)
 {
     g.board[i][j] = '0';
