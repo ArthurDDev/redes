@@ -18,66 +18,169 @@ int is_movement_type(char type) {
 }
 
 char get_pos(int i, int j, game g) {
-    if (i < 0 || i >= WIDTH || j < 0 || j >= WIDTH)
+    if (i < 0 || i >= WIDTH || j < 0 || j >= HEIGHT)
         return '#';
 
     else
         return g.board[i][j];
 }
 
-// Vermelho – regra da mão esquerda
-void red_movement(int i, int j, game g)
+direction turn_left(direction dir)
 {
-    g.board[i][j] = '0';
+    switch (dir) {
+        case UP:    return LEFT;
+        case DOWN:  return RIGHT;
+        case LEFT:  return DOWN;
+        case RIGHT: return UP;
+    }
 
-    if (get_pos(i, j - 1, g) == '0')
-        g.board[i][j - 1] = 'R';
-    else if (get_pos(i - 1, j, g) == '0')
-        g.board[i - 1][j] = 'R';
-    else
-        g.board[i][j] = 'R';
+    return UP;
 }
 
-// Verde – alterna direita e esquerda 
-void green_movement(int i, int j, game g)
+direction turn_right(direction dir)
 {
-    g.board[i][j] = '0';
-    if (get_pos(i + 1, j, g) != '#')
-        g.board[i + 1][j] = 'G';
-    else if (get_pos(i - 1, j, g) != '#')
-        g.board[i - 1][j] = 'G';
-    else
-        g.board[i][j] = 'G';
+    switch (dir) {
+        case UP:    return RIGHT;
+        case DOWN:  return LEFT;
+        case LEFT:  return UP;
+        case RIGHT: return DOWN;
+    }
+
+    return UP;
+}
+
+direction turn_back(direction dir)
+{
+    switch (dir) {
+        case UP:    return DOWN;
+        case DOWN:  return UP;
+        case LEFT:  return RIGHT;
+        case RIGHT: return LEFT;
+    }
+
+    return UP;
+}
+
+point next_position(point p, direction dir)
+{
+    switch (dir) {
+        case UP:
+            p.x--;
+            break;
+
+        case DOWN:
+            p.x++;
+            break;
+
+        case LEFT:
+            p.y--;
+            break;
+
+        case RIGHT:
+            p.y++;
+            break;
+    }
+
+    return p;
+}
+
+int can_move(game *g, point p)
+{
+    if (p.x < 0 || p.x >= WIDTH)
+        return 0;
+
+    if (p.y < 0 || p.y >= HEIGHT)
+        return 0;
+
+    if (g->board[p.x][p.y] != '0')
+        return 0;
+
+    return 1;
+}
+
+int move_ghost(game *g, ghost *ghost, direction dir)
+{
+    point next = next_position(ghost->pos, dir);
+
+    if (!can_move(g, next))
+        return 0;
+
+    g->board[ghost->pos.x][ghost->pos.y] = '0';
+
+    ghost->pos = next;
+
+    ghost->dir = dir;
+
+    g->board[ghost->pos.x][ghost->pos.y] = ghost->color;
+
+    return 1;
+}
+
+// Vermelho – regra da mão esquerda
+void red_movement(game *g, ghost *ghost)
+{
+    if (move_ghost(g, ghost, turn_left(ghost->dir)))
+        return;
+
+    if (move_ghost(g, ghost, ghost->dir))
+        return;
+
+    if (move_ghost(g, ghost, turn_right(ghost->dir)))
+        return;
+
+    move_ghost(g, ghost, turn_back(ghost->dir));
 }
 
 // Azul – regra da mão direita
-void blue_movement(int i, int j, game g)
+void blue_movement(game *g, ghost *ghost)
 {
-    g.board[i][j] = '0';
-    if (get_pos(i + 1, j, g) != '#')
-        g.board[i + 1][j] = 'B';
-    else if (get_pos(i - 1, j, g) != '#')
-        g.board[i - 1][j] = 'B';
+    if (move_ghost(g, ghost, turn_right(ghost->dir)))
+        return;
+
+    if (move_ghost(g, ghost, ghost->dir))
+        return;
+
+    if (move_ghost(g, ghost, turn_left(ghost->dir)))
+        return;
+
+    move_ghost(g, ghost, turn_back(ghost->dir));
+}
+
+// Verde – alterna direita e esquerda 
+void green_movement(game *g, ghost *ghost)
+{
+    static int toggle = 0;
+
+    if (toggle == 0)
+        red_movement(g, ghost);
     else
-        g.board[i][j] = 'B';
+        blue_movement(g, ghost);
+
+    toggle = !toggle;
 }
 
 // Amarelo – aleatório
-void yellow_movement(int i, int j, game g)
+void yellow_movement(game *g, ghost *ghost)
 {
-    g.board[i][j] = '0';
-    if (get_pos(i + 1, j, g) != '#')
-        g.board[i + 1][j] = 'Y';
-    else if (get_pos(i - 1, j, g) != '#')
-        g.board[i - 1][j] = 'Y';
-    else
-        g.board[i][j] = 'Y';
+    direction dir;
+
+    // tenta 4 vezes, se não conseguir mover, fica parado
+    for (int i = 0; i < 4; i++) {
+        dir = rand() % 4;
+        if (move_ghost(g, ghost, dir))
+            return;
+    }
 }
 
 void server_game_loop()
 {
     game g = make_game("");
     send_board(g);
+
+    ghost red = {'R', {3, 4}, RIGHT};
+    ghost green = {'G', {4, 4}, RIGHT};
+    ghost blue = {'B', {5, 4}, RIGHT};
+    ghost yellow = {'Y', {6, 4}, RIGHT};
 
     message m;
     int movement_count = 1;
@@ -94,26 +197,11 @@ void server_game_loop()
             m = receive_data();
         } while (!is_movement_type(m.type));
 
-        for (int i = 0; i < WIDTH; i ++)
-            for (int j = 0; j < WIDTH; j ++)
-                switch(g.board[i][j]) {
-                    case 'R':
-                        red_movement(i, j, g);
-                        break;
-
-                    case 'G':
-                        green_movement(i, j, g);
-                        break;
-
-                    case 'B':
-                        blue_movement(i, j, g);
-                        break;
-
-                    case 'Y':
-                        yellow_movement(i, j, g);
-                        break;
-                }
-
+        red_movement(&g, &red);
+        green_movement(&g, &green);
+        blue_movement(&g, &blue);
+        yellow_movement(&g, &yellow);
+            
         point next_pos = g.player_pos;
         switch(m.type) {
             case M_UP:
@@ -174,6 +262,7 @@ void server_game_loop()
                 break;
 
         }
+        
         if (get_pos(g.player_pos.x, g.player_pos.y, g) == 'P')
             g.board[g.player_pos.x][g.player_pos.y] = '0';
         g.player_pos = next_pos;
