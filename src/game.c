@@ -349,8 +349,12 @@ void render_board(unsigned char *board, size_t size)
     }
 
     for (size_t i = 0; i < size; i += width) {
-        for (size_t j = 0; j < width; j ++)
+        for (size_t j = 0; j < width; j ++) {
+		if (board[i+j] == '0')
+			printf(" ");
+		else
             printf("%c", board[i + j]);
+	}
         printf("\n");
     }
 }

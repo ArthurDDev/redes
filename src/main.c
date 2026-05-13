@@ -9,7 +9,7 @@
 
 int main()
 {
-    setup_connection("lo");
+    setup_connection("enp0s31f6");
 
 #ifdef SERVER
 
@@ -22,7 +22,7 @@ int main()
 */
 
 #else
-
+    
     client_game_loop();
 
 #endif

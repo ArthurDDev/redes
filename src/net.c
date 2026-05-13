@@ -86,7 +86,8 @@ char recieve_ack(char seq)
             break;
         }
         if (recv(CON.socket, buffer, 64, 0) == -1) {
-            continue;
+		fprintf(stderr, "Erro ao receber dados, contribuindo para o timeout\n");
+		continue;
         }
 
         if (validate_header(buffer))
@@ -109,7 +110,7 @@ char recieve_ack(char seq)
             return 0;
         }
     }
-    delete_message(&m);
+    //delete_message(&m);
     return 0;
 
 }
