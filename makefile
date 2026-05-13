@@ -14,10 +14,10 @@ all: client server
 
 server: $(OBJ)
 	$(CC) -D SERVER $(CFLAGS) -c $(SRC_DIR)/main.c -o $(BUILD_DIR)/main.o
-	$(CC) $(OBJ) -o $@ $(LDFLAGS)
+	$(CC) $(OBJ) -o $@ $(LDFLAGS) -lm
 
 client: $(OBJ)
-	$(CC) $(OBJ) -o $@ $(LDFLAGS)
+	$(CC) $(OBJ) -o $@ $(LDFLAGS) -lm
 
 $(BUILD_DIR)/%.o: $(SRC_DIR)/%.c
 	@mkdir -p $(dir $@)

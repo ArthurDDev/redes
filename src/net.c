@@ -25,9 +25,6 @@ int validate_header(unsigned char *buffer)
     if (buffer[0] != 0b01111110)
         return 1;
 
-
-    message m = decode_message(buffer);
-
     if (CON.seq != get_seq(buffer))
         return 1;
 
@@ -78,12 +75,7 @@ char get_seq(unsigned char *buffer)
 char recieve_ack(char seq)
 {
     message m;
-
-    unsigned char *buffer = malloc(64);
-    if (buffer == NULL) {
-        printf("Erro ao alocar memoria\n");
-        exit(1);
-    }
+    unsigned char buffer[64];
 
     time_t start_time, current_time;
     time(&start_time);
@@ -93,27 +85,32 @@ char recieve_ack(char seq)
             fprintf(stderr, "timeoutizinho\n");
             break;
         }
-
         if (recv(CON.socket, buffer, 64, 0) == -1) {
-            continue;
+		fprintf(stderr, "Erro ao receber dados, contribuindo para o timeout\n");
+		continue;
         }
 
         if (validate_header(buffer))
             continue;
 
-        save_header(buffer);
+        //save_header(buffer);
         m = decode_message(buffer);
-
-        if (get_seq(buffer) != seq)
+        if (get_seq(buffer) != seq) {
+            delete_message(&m);
             continue;
+        }
 
-        if (m.type == M_ACK)
+        if (m.type == M_ACK) {
+            delete_message(&m);
             return 1;
+        }
 
-        if (m.type == M_NACK)
+        if (m.type == M_NACK) {
+            delete_message(&m);
             return 0;
+        }
     }
-
+    //delete_message(&m);
     return 0;
 
 }
@@ -199,7 +196,6 @@ char send_message(message m)
         buffer = realloc(buffer, MIN_SIZE);
         siz = MIN_SIZE;
     }
-
     save_header(buffer);
 
     int timeouts = 0;
@@ -217,7 +213,6 @@ char send_message(message m)
         if (m.type == M_ACK || m.type == M_NACK)
             return 0;
     } while (!recieve_ack(CON.seq));
-
     //delete_message(&r);
 
     increment_seq();
