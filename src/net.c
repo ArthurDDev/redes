@@ -61,10 +61,21 @@ void send_ack()
     void *buffer = malloc(20);
     create_frame((message){0, M_ACK, NULL}, &buffer);
 
-    //printf("Enviando ACK\n");
+    if (send(CON.socket, buffer, 20, 0) == -1) {
+        fprintf(stderr, "Erro ao enviar ACK\n");
+        return;
+    }
+}
+
+void send_nack()
+{
+    void *buffer = malloc(20);
+    create_frame((message){0, M_NACK, NULL}, &buffer);
+
+    printf("ENVIANDO NACK\n");
 
     if (send(CON.socket, buffer, 20, 0) == -1) {
-        fprintf(stderr, "Erro ao enviar mensagem\n");
+        fprintf(stderr, "Erro ao enviar NACK\n");
         return;
     }
 }
@@ -140,8 +151,11 @@ message receive_message()
             continue;
         save_header(buffer);
 
-
         m = decode_message(buffer);
+        if (!validade_frame(m.data, m.data + 4)) {
+            send_nack();
+            continue;
+        }
 
         if (m.type == M_ACK || m.type == M_NACK)
             continue;
