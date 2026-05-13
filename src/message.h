@@ -6,6 +6,9 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#define MIN_SIZE 14
+#define MAX_DATA 31
+
 // Estrutura do frame:
 //
 // Marcador de Início | Tamanho | Sequencia | Tipo   | Dados   | CRC
@@ -34,7 +37,7 @@ struct message
 {
     size_t size; // Tamanho dos DADOS em bytes
     char type;  // Tipo conforme o enum
-    void *data; // Buffer de dados
+    char *data; // Buffer de dados
 };
 typedef struct message message;
 

@@ -7,7 +7,8 @@
 #include <stddef.h>
 
 #define MAX_SEQ 8
-#define MIN_SIZE 14
+#define TIMEOUT 2
+#define MAX_TIMEOUT 5
 
 struct connection {
     int socket;
@@ -33,5 +34,10 @@ size_t send_data(message m);
 
 // Recebe mensagens, retorna uma mensagem com tamanho negativo em caso de erro
 message receive_data();
+message receive_message();
+
+char next_seq();
+
+char get_seq(unsigned char *buffer);
 
 #endif

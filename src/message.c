@@ -1,4 +1,5 @@
 #include "message.h"
+#include "net.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdint.h>
@@ -18,14 +19,14 @@ size_t create_frame(message m, void **dest)
         exit(1);
     }
 
-    unsigned char seq = 0;
+    unsigned char seq = next_seq();
 
     str[0] = 0b01111110;
     // bits mais significativos | bits menos significativos
-    str[1] = m.size << 3 | seq >> 5;
-    str[2] = seq << 3 | m.type;
-    
-    // copia os dados da mensagem para a string
+    str[1] = (m.size << 3) | (seq >> 3);
+    str[2] = (seq << 5) | m.type;
+
+    // copia os dados da mensgaem para a string
     memcpy(&str[3], m.data, m.size);
 
     str[size-1] = get_crc(str, size - 1); 
