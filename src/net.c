@@ -55,7 +55,7 @@ char increment_seq()
 
 void send_ack()
 {
-    void *buffer = malloc(20);
+    unsigned char *buffer = malloc(20);
     create_frame((message){0, M_ACK, NULL}, &buffer);
 
     if (send(CON.socket, buffer, 20, 0) == -1) {
@@ -66,7 +66,7 @@ void send_ack()
 
 void send_nack()
 {
-    void *buffer = malloc(20);
+    unsigned char *buffer = malloc(20);
     create_frame((message){0, M_NACK, NULL}, &buffer);
 
     printf("ENVIANDO NACK\n");
@@ -97,8 +97,7 @@ char recieve_ack(char seq)
             break;
         }
         if (recv(CON.socket, buffer, 64, 0) == -1) {
-		fprintf(stderr, "Erro ao receber dados, contribuindo para o timeout\n");
-		continue;
+            continue;
         }
 
         if (validate_header(buffer))
@@ -149,7 +148,7 @@ message receive_message()
         save_header(buffer);
 
         m = decode_message(buffer);
-        if (!validade_frame(m.data, m.data + 4)) {
+        if (m.size > 0 && !validate_frame(buffer, m.size + 4)) {
             send_nack();
             continue;
         }
@@ -204,7 +203,7 @@ char next_seq()
 
 char send_message(message m)
 {
-    void *buffer;
+    unsigned char *buffer;
     size_t siz = create_frame(m, &buffer);
     if (siz < MIN_SIZE) {
         buffer = realloc(buffer, MIN_SIZE);
@@ -219,7 +218,16 @@ char send_message(message m)
             fprintf(stderr, "Timeout\n");
             exit(1);
         }
-        if (send(CON.socket, buffer, siz, 0) == -1) {
+        
+        unsigned char *buffer2 = malloc(siz);
+        memcpy(buffer2, buffer, siz);
+        
+        if (rand() % 100 < 5) {
+            buffer2[rand() % siz] = 'x';
+            printf("Simulando corropido\n");
+        }
+
+        if (send(CON.socket, buffer2, siz, 0) == -1) {
             fprintf(stderr, "Erro ao enviar mensagem\n");
             return 1;
         }

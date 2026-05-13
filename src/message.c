@@ -5,7 +5,7 @@
 #include <stdint.h>
 #include <string.h>
 
-size_t create_frame(message m, void **dest)
+size_t create_frame(message m, unsigned char **dest)
 {
     // Marcador de Início |   Tamanho   |   Sequencia   |   Tipo   |   Dados   |   CRC
     //       1 byte       |   5 bits    |    6 bits     |  5 bits  |  n bytes  |  1 byte
@@ -42,6 +42,9 @@ int validate_frame(unsigned char *frame, size_t size)
     }
 
     unsigned char crc = get_crc(frame, size-1);
+
+    //printf("CRC Calculado: %x, CRC da mensagem: %x\n", crc, frame[size-1]);
+
     if (crc != frame[size-1])
         return 0;
 
@@ -110,7 +113,6 @@ uint8_t get_crc(const uint8_t *data, size_t size)
         }
     }
 
-    printf("Nosso CRC: %x\n", crc);
     return crc;
 }
 

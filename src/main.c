@@ -1,6 +1,7 @@
 #include "stdio.h"
 #include "sys/socket.h"
 #include <unistd.h>
+#include <time.h>
 
 #include "game.h"
 #include "net.h"
@@ -9,21 +10,24 @@
 
 int main()
 {
-    setup_connection("enp0s31f6");
+    setup_connection("lo");
+
+    srand(time(NULL));
 
 #ifdef SERVER
 
-    server_game_loop();
+    //server_game_loop();
 
-/*
-    size_t size;
-    unsigned char *buffer = file_to_buffer("arthur.txt", &size);
-    send_data((message){size, M_TXT, buffer});
-*/
+    size_t s;
+    unsigned char *buffer = file_to_message("foto.jpg", &s);
+    send_data((message){s, M_JPG, buffer});
 
 #else
     
-    client_game_loop();
+    //client_game_loop();
+
+    message m = receive_data();
+    message_to_file(m);
 
 #endif
 

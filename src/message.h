@@ -43,7 +43,7 @@ typedef struct message message;
 
 // Cria o frame no buffer void a partir dos dados da mensagem m.
 // Retorna o tamanho da mensagem inteira em bytes ou -1 em erro
-size_t create_frame(message m, void **dest);
+size_t create_frame(message m, unsigned char **dest);
 
 int validate_frame(unsigned char *frame, size_t size);
 
