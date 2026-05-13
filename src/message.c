@@ -11,7 +11,6 @@ size_t create_frame(message m, void **dest)
 
     // tamanho da mensagem + 4 bytes (marcador, tamanho,sequencia , tipo, CRC) 
     size_t size = m.size + 4;
-
     unsigned char *str = malloc(size);
     if (!str) {
         fprintf(stderr, "Erro ao alocar memória\n");
@@ -58,19 +57,19 @@ message decode_message(void *src)
         fprintf(stderr, "Ponteiro de mensagem inválido\n");
         exit(1);
     }
-
     unsigned char *frame = src;
     message m;
-
     m.size = frame[1] >> 3;
-    m.data = malloc(m.size);
-    if (m.data == NULL) {
-        fprintf(stderr, "Erro ao alocar memória\n");
-        exit(1);
+    if (m.size != 0) {
+        m.data = malloc(32);
+        if (m.data == NULL) {
+            fprintf(stderr, "Erro ao alocar memória\n");
+            exit(1);
+        }
     }
-
+    else
+        m.data = NULL;
     memcpy(m.data, &frame[3], m.size);
     m.type = frame[2] & 0b00011111;
-
     return m;
 }

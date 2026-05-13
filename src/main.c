@@ -2,37 +2,28 @@
 #include "sys/socket.h"
 #include <unistd.h>
 
+#include "game.h"
 #include "net.h"
 #include "socket.h"
 #include "files.h"
 
 int main()
 {
-    setup_connection("lo");
+    setup_connection("enp0s31f6");
 
 #ifdef SERVER
 
+    server_game_loop();
+
+/*
     size_t size;
-    unsigned char *buffer = file_to_message("foto.jpg", &size);
-    send_data((message){size, M_JPG, buffer});
-    
+    unsigned char *buffer = file_to_buffer("arthur.txt", &size);
+    send_data((message){size, M_TXT, buffer});
+*/
 
 #else
-
-    while (1) {
-        message m = receive_data();
-
-        unsigned char *data = m.data;
-
-        message_to_file(m);
-        //xdg-open foto.jpg
-        //fork(); //execv
-
-        // mensagem em normal
-        for (size_t i = 0; i < m.size; i ++)
-            printf("%c", data[i]);
-        printf("\n");
-    }
+    
+    client_game_loop();
 
 #endif
 
