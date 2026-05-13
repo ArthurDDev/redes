@@ -2,6 +2,7 @@
 #include "net.h"
 #include <stdlib.h>
 #include <stdio.h>
+#include <stdint.h>
 #include <string.h>
 
 size_t create_frame(message m, void **dest)
@@ -23,13 +24,28 @@ size_t create_frame(message m, void **dest)
     // bits mais significativos | bits menos significativos
     str[1] = (m.size << 3) | (seq >> 3);
     str[2] = (seq << 5) | m.type;
-    str[size-1] = 0; // TODO: CRC
 
     // copia os dados da mensgaem para a string
     memcpy(&str[3], m.data, m.size);
 
+    str[size-1] = get_crc(str, size - 1); 
+
     *dest = str;
     return size;
+}
+
+int validate_frame(unsigned char *frame, size_t size)
+{
+    if (!frame ) {
+        fprintf(stderr, "Ponteiro nulo\n");
+        exit(1);
+    }
+
+    unsigned char crc = get_crc(frame, size-1);
+    if (crc != frame[size-1])
+        return 0;
+
+    return 1;
 }
 
 void *delete_frame(void *dest)
@@ -73,3 +89,29 @@ message decode_message(void *src)
     m.type = frame[2] & 0b00011111;
     return m;
 }
+
+uint8_t get_crc(const uint8_t *data, size_t size)
+{
+    //valor inicial
+    uint8_t crc = 0x00;
+    //polinomio gerador
+    uint8_t polinomio = 0xD5;
+
+    for (size_t i = 0; i < size; i++){
+        crc ^= data[i];
+        
+        for (uint8_t bit = 0; bit < 8; bit++){
+            if (crc & 0x80) {
+                crc = (crc << 1) ^polinomio;
+            }
+            else {
+                crc <<= 1;
+            }
+        }
+    }
+
+    printf("Nosso CRC: %x\n", crc);
+    return crc;
+}
+
+

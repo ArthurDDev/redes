@@ -4,6 +4,7 @@
 #define __MESSAGE__
 
 #include <stddef.h>
+#include <stdint.h>
 
 #define MIN_SIZE 14
 #define MAX_DATA 31
@@ -44,6 +45,8 @@ typedef struct message message;
 // Retorna o tamanho da mensagem inteira em bytes ou -1 em erro
 size_t create_frame(message m, void **dest);
 
+int validate_frame(unsigned char *frame, size_t size);
+
 // Destroi um frame, retorna NULL
 void *delete_frame(void *dest);
 
@@ -53,5 +56,7 @@ void delete_message(message *m);
 // Decodifica a mensagem do buffer src
 // Retorna uma struct com os dados
 message decode_message(void *src);
+
+uint8_t get_crc(const uint8_t *data, size_t size);
 
 #endif
