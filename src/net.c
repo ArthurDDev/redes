@@ -218,16 +218,8 @@ char send_message(message m)
             fprintf(stderr, "Timeout\n");
             exit(1);
         }
-        
-        unsigned char *buffer2 = malloc(siz);
-        memcpy(buffer2, buffer, siz);
-        
-        if (rand() % 100 < 5) {
-            buffer2[rand() % siz] = 'x';
-            printf("Simulando corropido\n");
-        }
 
-        if (send(CON.socket, buffer2, siz, 0) == -1) {
+        if (send(CON.socket, buffer, siz, 0) == -1) {
             fprintf(stderr, "Erro ao enviar mensagem\n");
             return 1;
         }
