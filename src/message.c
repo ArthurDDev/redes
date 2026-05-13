@@ -34,6 +34,20 @@ size_t create_frame(message m, void **dest)
     return size;
 }
 
+int validate_frame(unsigned char *frame, size_t size)
+{
+    if (!frame ) {
+        fprintf(stderr, "Ponteiro nulo\n");
+        exit(1);
+    }
+
+    unsigned char crc = get_crc(frame, size-1);
+    if (crc != frame[size-1])
+        return 0;
+
+    return 1;
+}
+
 void *delete_frame(void *dest)
 {
     if (dest != NULL)
