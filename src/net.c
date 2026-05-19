@@ -143,6 +143,8 @@ message receive_message()
             continue;
         }
 
+        restore_buffer(&buffer, 64);
+
         if (validate_header(buffer))
             continue;
         save_header(buffer);
@@ -201,6 +203,38 @@ char next_seq()
     return CON.seq;
 }
 
+size_t format_buffer(unsigned char **buffer, size_t size)
+{
+    *buffer = realloc(*buffer, size * 2);
+
+
+    size_t siz = size;
+    for (size_t i = 0; i < size * 2 - 1; i ++) {
+        if ((*buffer)[i] == 0x88 || (*buffer)[i] == 0x81) {
+            siz ++;
+            for (size_t j = size * 2 - 2; j > i; j --)
+                (*buffer)[j + 1] = (*buffer)[j];
+            (*buffer)[i + 1] = 0xFF;
+        }
+    }
+
+
+    return siz;
+}
+
+size_t restore_buffer(unsigned char **buffer, size_t size)
+{
+    size_t siz = size;
+    for (size_t i = 1; i < size; i ++) {
+        if ((*buffer)[i] == 0xFF && ((*buffer)[i-1] == 0x88 || (*buffer)[i-1] == 0x81)) {
+            siz --;
+            for (size_t j = i; j < size - 1; j ++)
+                (*buffer)[j] = (*buffer)[j + 1];
+        }
+    }
+    return siz;
+}
+
 char send_message(message m)
 {
     unsigned char *buffer;
@@ -210,6 +244,8 @@ char send_message(message m)
         siz = MIN_SIZE;
     }
     save_header(buffer);
+
+    siz = format_buffer(&buffer, siz);
 
     int timeouts = 0;
     do {

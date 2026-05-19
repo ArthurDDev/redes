@@ -36,6 +36,10 @@ size_t send_data(message m);
 message receive_data();
 message receive_message();
 
+size_t restore_buffer(unsigned char **buffer, size_t size);
+size_t format_buffer(unsigned char **buffer, size_t size);
+
+
 char next_seq();
 
 char get_seq(unsigned char *buffer);
