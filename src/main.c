@@ -8,9 +8,14 @@
 #include "socket.h"
 #include "files.h"
 
-int main()
+int main(int argc, char **argv)
 {
-    setup_connection("lo");
+    if (argc <= 1){
+        fprintf(stderr, "Fornecer a interface de rede como argumento\n");
+        exit(1);
+    }
+
+    setup_connection(argv[1]);
 
     srand(time(NULL));
 
