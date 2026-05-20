@@ -93,6 +93,8 @@ void message_to_file(message m) {
     fwrite(m.data + 1, m.size - 1, 1, file);
 
     fclose(file);
+
+    open_file(filename);
 }
 
 void open_file(char *filename)

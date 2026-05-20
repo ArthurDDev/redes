@@ -6,6 +6,7 @@
 #include <string.h>
 #include "message.h"
 #include "net.h"
+#include "files.h"
 
 int is_movement_type(char type) {
     if (type == M_UP
@@ -119,6 +120,8 @@ int move_ghost(game *g, ghost *ghost, direction dir)
 // Vermelho – regra da mão esquerda
 void red_movement(game *g, ghost *ghost)
 {
+	printf("Direção vermelho: %d\n", ghost->dir);
+
     if (move_ghost(g, ghost, turn_left(ghost->dir)))
         return;
 
@@ -178,9 +181,9 @@ void server_game_loop()
     send_board(g);
 
     ghost red = {'R', {3, 4}, RIGHT};
-    ghost green = {'G', {4, 4}, RIGHT};
-    ghost blue = {'B', {5, 4}, RIGHT};
-    ghost yellow = {'Y', {6, 4}, RIGHT};
+    ghost green = {'G', {30, 30}, RIGHT};
+    ghost blue = {'B', {30, 30}, RIGHT};
+    ghost yellow = {'Y', {30, 30}, RIGHT};
 
     message m;
     int movement_count = 1;
@@ -228,7 +231,10 @@ void server_game_loop()
             c = get_pos(next_pos.x, next_pos.y, g);
         }
 
-        switch(c) {
+	size_t siz;
+        unsigned char *data;
+
+	switch(c) {
             case 'R':
                 printf("JOGADOR PERDEU\n");
                 break;
@@ -243,22 +249,28 @@ void server_game_loop()
                 break;
             
             case '1':
-                printf("JOGADOR COLETOU 1\n");
+                data = file_to_message("1.txt", &siz);
+		send_data((message){siz, M_TXT, data});
                 break;
             case '2':
-                printf("JOGADOR COLETOU 2\n");
+                data = file_to_message("2.txt", &siz);
+		send_data((message){siz, M_TXT, data});
                 break;
             case '3':
-                printf("JOGADOR COLETOU 3\n");
+                data = file_to_message("3.jpg", &siz);
+		send_data((message){siz, M_JPG, data});
                 break;
             case '4':
-                printf("JOGADOR COLETOU 4\n");
+                data = file_to_message("4.jpg", &siz);
+		send_data((message){siz, M_JPG, data});
                 break;
             case '5':
-                printf("JOGADOR COLETOU 5\n");
+                data = file_to_message("5.mp4", &siz);
+		send_data((message){siz, M_MP4, data});
                 break;
             case '6':
-                printf("JOGADOR COLETOU 6\n");
+                data = file_to_message("6.mp4", &siz);
+		send_data((message){siz, M_MP4, data});
                 break;
 
         }
@@ -298,6 +310,9 @@ void client_game_loop()
         message m;
         do {
             m = receive_data();
+	    if (m.type == M_MP4 || m.type == M_TXT || m.type == M_JPG) {
+		message_to_file(m);
+	    }
         } while (m.type != M_VIS);
 
         render_board(m.data, m.size);
@@ -353,7 +368,8 @@ void render_board(unsigned char *board, size_t size)
 		  if (board[i+j] == '0')
 		    printf(" ");
           else if (board[i+j] == '#')
-            printf("|");
+            //printf("█");
+	    printf("#");
 		  else 
             printf("%c", board[i + j]);
 	}
@@ -366,7 +382,7 @@ game make_game(const char *map)
     game g;
     const char *ufpr_board[] = {
         "########################################",
-        "#00000000000000000000000000000000000000#",
+        "#00000000123456000000000000000000000000#",
         "#0####################################0#",
         "#0####################################0#",
         "#0##00###00000###00000###0000#000000000#",
