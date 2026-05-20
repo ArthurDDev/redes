@@ -21,18 +21,18 @@ int main(int argc, char **argv)
 
 #ifdef SERVER
 
-    //server_game_loop();
+    server_game_loop();
 
-    size_t s;
-    unsigned char *buffer = file_to_message("foto.jpg", &s);
-    send_data((message){s, M_JPG, buffer});
+    // size_t s;
+    // unsigned char *buffer = file_to_message("foto.jpg", &s);
+    // send_data((message){s, M_JPG, buffer});
 
 #else
     
-    //client_game_loop();
+    client_game_loop();
 
-    message m = receive_data();
-    message_to_file(m);
+    // message m = receive_data();
+    // message_to_file(m);
 
 #endif
 
