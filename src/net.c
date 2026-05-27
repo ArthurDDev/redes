@@ -182,8 +182,22 @@ message receive_data()
             return m;
     }
 
-    message ml = {m.size, m.type, malloc(m.size)};
-    memcpy(ml.data, m.data, m.size);
+    char is_file = 0;
+    if (m.type == M_TXT
+        || m.type == M_JPG
+        || m.type == M_MP4)
+        is_file = 1;
+
+
+    message ml;
+    if (is_file) {
+        ml = (message){1, m.type, malloc(1)};
+        ml.data[0] = m.data[0];
+    }
+    else {
+        ml = (message){m.size, m.type, malloc(m.size)};
+        memcpy(ml.data, m.data, m.size);
+    }
     delete_message(&m);
 
     do {
@@ -197,7 +211,6 @@ message receive_data()
     return ml;
 }
 
-// IMPLEMENTADO DO JEITO BURRO IDIOTA INEFICIENTE SEM JANELA DESLIZANTE
 char next_seq()
 {
     return CON.seq;
@@ -273,9 +286,48 @@ char send_message(message m)
 
 size_t send_data(message m)
 {
+    char is_file = 0;
+    if (m.type == M_TXT
+        || m.type == M_JPG
+        || m.type == M_MP4)
+        is_file = 1;
+
     int64_t size_left = m.size;
 
     message t;
+    
+    if (is_file) {
+
+        t.data = malloc(sizeof(size_t) + 1);
+        t.type = m.type;
+        size_left -= 1;
+        t.data[0] = m.data[0];
+        for (size_t i = 1; i <= sizeof(size_t); i++)
+            t.data[i] = size_left >> (8 * (sizeof(size_t) - i));
+
+        t.size = 1 + sizeof(size_t);
+        send_message(t);
+        free(t.data);
+
+        do {
+            t.type = M_DATA;
+            if (size_left > MAX_DATA)
+                t.size = MAX_DATA;
+            else
+                t.size = size_left;
+
+            t.data = &m.data[m.size - size_left];
+
+            send_message(t);
+
+            size_left -= MAX_DATA;
+        } while (size_left > 0);
+
+        send_message((message){0, M_END, NULL});
+
+        return 1;
+    }
+
     t.data = m.data;
     do {
         t.type = m.type;
@@ -291,11 +343,7 @@ size_t send_data(message m)
         size_left -= MAX_DATA;
     } while (size_left > 0);
 
-    if (m.type == M_VIS
-        || m.type == M_DATA
-        || m.type == M_TXT
-        || m.type == M_JPG
-        || m.type == M_MP4)
+    if (m.type == M_VIS)
         send_message((message){0, M_END, NULL});
 
     return 1;
