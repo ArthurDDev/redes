@@ -59,4 +59,6 @@ point next_position(point p, direction dir);
 int can_move(game *g, point p);
 int move_ghost(game *g, ghost *gh, direction dir);
 
+long aleat (long min, long max);
+
 #endif

@@ -373,10 +373,11 @@ game make_game(const char *map)
     game g;
     g.light_level = 1;
     g.player_pos = (point){1, 1};
-    g.red = (ghost){'R', {1, 25}, RIGHT};
-    g.green = (ghost){'G', {30, 15}, DOWN};
-    g.blue = (ghost){'B', {30, 30}, RIGHT};
-    g.yellow = (ghost){'Y', {4, 35}, LEFT};
+
+    g.red = (ghost){'R', {aleat(0, 40), aleat(0, 40)}, RIGHT};
+    g.green = (ghost){'G', {aleat(0, 40), aleat(0, 40)}, DOWN};
+    g.blue = (ghost){'B', {aleat(0, 40), aleat(0, 40)}, RIGHT};
+    g.yellow = (ghost){'Y', {aleat(0, 40), aleat(0, 40)}, LEFT};
 
     const char *ufpr_board[] = {
         "########################################",
@@ -426,6 +427,14 @@ game make_game(const char *map)
         for (int i = 0; i < WIDTH; i ++)
             for (int j = 0; j < WIDTH; j ++)
                 g.board[j][i] = ufpr_board[i][j];
+
+        for (int i = 0; i < 6; i++){
+            int x = aleat(0, 40);
+            int y = aleat(0, 40);
+
+            if (g.board[x][y] == '0')
+                g.board[x][y] = i + '0';
+        }
     } 
     else {
         FILE *csv = fopen(map, "r");
@@ -489,3 +498,10 @@ game make_game(const char *map)
 
     return g;
 }
+
+long aleat (long min, long max)
+{
+  return ((rand() % (max - min + 1)) + min); 
+}
+
+
