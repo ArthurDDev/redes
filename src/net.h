@@ -1,4 +1,5 @@
 // Envio e recebimento de mensagens
+// Cuida do protocolo de fato
 
 #ifndef __NET__
 #define __NET__
@@ -13,7 +14,7 @@
 struct connection {
     int socket;
     short seq;
-    char last_message[3];
+    //char last_message[3];
 };
 
 extern struct connection CON;
@@ -36,10 +37,7 @@ size_t send_data(message m);
 message receive_data();
 message receive_message();
 
-size_t restore_buffer(unsigned char **buffer, size_t size);
-size_t format_buffer(unsigned char **buffer, size_t size);
-
 char next_seq();
-char get_seq(unsigned char *buffer);
+char seq_from_buffer(unsigned char *buffer);
 
 #endif

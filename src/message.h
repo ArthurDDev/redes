@@ -1,3 +1,4 @@
+
 //  Tudo que tem a ver com mensagem e manipulação dos bytes
 
 #ifndef __MESSAGE__
@@ -45,6 +46,8 @@ typedef struct message message;
 // Retorna o tamanho da mensagem inteira em bytes ou -1 em erro
 size_t create_frame(message m, unsigned char **dest);
 
+// Valida se um frame recebido é válido. Um frame é valido se o crc presente é igual ao calculado
+// Retorna 1 se é valido e 0 se não é
 int validate_frame(unsigned char *frame, size_t size);
 
 // Destroi um frame, retorna NULL
@@ -58,5 +61,14 @@ void delete_message(message *m);
 message decode_message(void *src);
 
 uint8_t get_crc(const uint8_t *data, size_t size);
+
+// Formata e recupera o buffer logo antes de enviar a mensagem para evitar
+// que a placa de rede trave com 0x88 e 0x81
+// Retornam o tamanho do novo frame
+size_t restore_buffer(unsigned char **buffer, size_t size);
+size_t format_buffer(unsigned char **buffer, size_t size);
+
+// Retorna 1 se é um arquivo, 0 se não é
+char is_file(message m);
 
 #endif

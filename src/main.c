@@ -24,8 +24,8 @@ int main(int argc, char **argv)
     //server_game_loop();
 
     size_t s;
-    unsigned char *buffer = file_to_message("exemplo.txt", &s);
-    send_data((message){s, M_TXT, buffer});
+    unsigned char *buffer = file_to_message("teste.mp4", &s);
+    send_data((message){s, M_MP4, buffer});
 
 #else
     

@@ -82,10 +82,6 @@ void message_to_file(message m) {
 
     filename[5] = '\0';
 
-    //for (size_t i = 0; i < m.size; i ++)
-    //    printf("%02x ", m.data[i]);
-    //printf("\n");
-
     file = fopen(filename, "wb");
 
     fseek(file, 0, SEEK_SET);
