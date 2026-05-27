@@ -174,9 +174,9 @@ void yellow_movement(game *g, ghost *ghost)
     }
 }
 
-void server_game_loop()
+void server_game_loop(const char *map)
 {
-    game g = make_game("");
+    game g = make_game(map);
     send_board(g);
 
     ghost red = {'R', {3, 4}, RIGHT};
@@ -286,8 +286,6 @@ void server_game_loop()
 
 void send_board(game g)
 {
-    //printf("S1\n");
-
     int width = g.light_level * 2 + 1;
     int area = width * width;
     unsigned char *buffer = malloc(area);
@@ -368,7 +366,7 @@ void render_board(unsigned char *board, size_t size)
 		    printf(" ");
           else if (board[i+j] == '#')
             //printf("█");
-	    printf("#");
+	        printf("#");
 		  else 
             printf("%c", board[i + j]);
 	}
@@ -379,9 +377,16 @@ void render_board(unsigned char *board, size_t size)
 game make_game(const char *map)
 {
     game g;
+    g.light_level = 1;
+    g.player_pos = (point){1, 1};
+    ghost red = {'R', {1, 25}, RIGHT};
+    ghost green = {'G', {30, 15}, DOWN};
+    ghost blue = {'B', {30, 30}, RIGHT};
+    ghost yellow = {'Y', {4, 35}, LEFT};
+
     const char *ufpr_board[] = {
         "########################################",
-        "#0000000000000000000000000000000000000#",
+        "#P000000000000000000000000000000000000#",
         "#0000000000000000000000000000000000000#",
         "#0000000000000000000000000000000000000#",
         "#0000000000000000000000000000000000000#",
@@ -408,7 +413,7 @@ game make_game(const char *map)
         "#0000000000000000000000000000000000000#",
         "#0000000000000000000000000000000000000#",
         "#0000000000000000000000000000000000000#",
-        "0000000000000000000000000000000000000#",
+        "#0000000000000000000000000000000000000#",
         "#0000000000000000000000000000000000000#",
         "#0000000000000000000000000000000000000#",
         "#0000000000000000000000000000000000000#",
@@ -422,13 +427,71 @@ game make_game(const char *map)
         "########################################"
     };
 
-    if (strcmp(map, "") == 0)
+    if (!map || strcmp(map, "") == 0) {
+        printf("Usando mapa padrão\n");
         for (int i = 0; i < WIDTH; i ++)
             for (int j = 0; j < WIDTH; j ++)
                 g.board[j][i] = ufpr_board[i][j];
+    } 
+    else {
+        FILE *csv = fopen(map, "r");
 
-    g.light_level = 1;
-    g.player_pos = (point){2, 2};
+        if (!csv) {
+            perror("Erro abrindo mapa");
+
+            // volta pro UFPR
+            for (int i = 0; i < HEIGHT; i++)
+                for (int j = 0; j < WIDTH; j++)
+                    g.board[j][i] = ufpr_board[i][j];
+        }
+        else {
+            // inicializa o tabuleiro vazio
+            memset(g.board,'0',sizeof(g.board));
+
+            char line[256];
+
+            for (int i = 0; i < HEIGHT; i++) {
+
+                if (!fgets(line, sizeof(line), csv))
+                    break;
+
+                int col = 0;
+
+                // pega cada elemento separado por vírgula
+                char *tok = strtok(line,",\n");
+
+                while(tok && col < WIDTH){
+
+                    char c = tok[0];
+
+                    g.board[col][i] = c;
+
+                    switch(c){
+                        case 'P':
+                            g.player_pos = (point){col,i};
+                            break;
+                        case 'R':
+                            red = {'R', {col, i}, RIGHT};
+                            break;
+                        case 'G':
+                            green = {'G', {col, i}, RIGHT};
+                            break;
+                        case 'B':
+                            blue = {'B', {col, i}, RIGHT};
+                            break;
+                        case 'Y':
+                            yellow = {'Y', {col, i}, RIGHT};
+                            break;
+                    }
+
+                    tok = strtok(NULL,",\n");
+                    col++;
+                }
+            }
+
+            fclose(csv);
+        }
+    }
 
     return g;
 }

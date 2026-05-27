@@ -15,4 +15,7 @@ void message_to_file(message m);
 // abre um arquivo usando o programa padrão do sistema
 void open_file(char *filename);
 
+// retorna o espaço livre em bytes do diretório especificado pelo path
+long long espaco_livre(const char *path);
+
 #endif

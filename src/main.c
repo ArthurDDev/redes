@@ -21,7 +21,12 @@ int main(int argc, char **argv)
 
 #ifdef SERVER
 
-    server_game_loop();
+    const char *map = "";
+
+    if (argc == 3)
+        map = argv[2];
+    
+    server_game_loop(map);
 
     // size_t s;
     // unsigned char *buffer = file_to_message("foto.jpg", &s);

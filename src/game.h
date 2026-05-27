@@ -36,7 +36,7 @@ typedef struct game game;
 
 
 // SERVER
-void server_game_loop();
+void server_game_loop(const char *map);
 game make_game(const char *map);
 void server_process(game g);
 void send_board(game g);

@@ -3,6 +3,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <sys/types.h>
+#include <sys/statvfs.h>
 #include "files.h"
 #include "message.h"
 
@@ -82,9 +83,14 @@ void message_to_file(message m) {
 
     filename[5] = '\0';
 
-    //for (size_t i = 0; i < m.size; i ++)
-    //    printf("%02x ", m.data[i]);
-    //printf("\n");
+    long long espaco_disponivel = espaco_livre(".");
+
+    if (espaco_disponivel < (long long)(m.size - 1)) {
+        fprintf(stderr,"Espaço insuficiente no disco.\n"
+                       "Necessário: %ld bytes\n"
+                       "Disponível: %lld bytes\n", m.size - 1, espaco_disponivel);
+        return;
+    }
 
     file = fopen(filename, "wb");
 
@@ -115,4 +121,17 @@ void open_file(char *filename)
         fprintf(stderr, "Erro ao abrir arquivo.\n");
         exit(1);
     }
+}
+
+long long espaco_livre(const char *path)
+{
+    struct statvfs s;
+
+    //syscall pra pegar o espaço livre do diretório especificado pelo path
+    if (statvfs(path, &s) != 0) {
+        fprintf(stderr, "Erro ao obter informações do tamanho do diretório.\n");
+        return -1;
+    }
+
+    return (long long)s.f_bavail * s.f_frsize;
 }
