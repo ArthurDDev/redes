@@ -90,7 +90,7 @@ char recieve_ack(char seq)
 
         m = decode_message(buffer);
         if (seq_from_buffer(buffer) != seq) {
-            delete_message(&m);
+		delete_message(&m);
             continue;
         }
 
@@ -104,8 +104,6 @@ char recieve_ack(char seq)
             return 0;
         }
     }
-    
-    delete_message(&m);
     
     return 0;
 }
