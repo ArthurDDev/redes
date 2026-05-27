@@ -24,6 +24,7 @@ enum message_type {
     M_TXT = 5,
     M_JPG = 6,
     M_MP4 = 7,
+    M_LOSE = 8,
     M_RIGHT = 10,
     M_LEFT = 11,
     M_UP = 12,

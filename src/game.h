@@ -43,7 +43,7 @@ typedef struct game game;
 void server_game_loop(const char *map);
 game make_game(const char *map);
 void server_process(game g);
-void send_board(game g);
+void send_board(game g, char first);
 point get_element(char el);
 
 // CLIENTE

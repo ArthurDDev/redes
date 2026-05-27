@@ -174,17 +174,28 @@ void yellow_movement(game *g, ghost *ghost)
     }
 }
 
+void lose_server()
+{
+	size_t siz;
+	unsigned char *data = file_to_message("perdeu.txt", &siz);
+	send_data((message){siz, M_TXT, data});
+	free(data);
+
+	send_data((message){0, M_LOSE, NULL});
+	exit(0);
+}
+
 void server_game_loop(const char *map)
 {
     game g = make_game(map);
-    send_board(g);
+    send_board(g, 1);
 
     message m;
     int movement_count = 1;
     while (1) {
         // Fog of war
         if (movement_count % 5 == 0 && g.light_level < WIDTH)
-            g.light_level += 40;
+            g.light_level ++;
         movement_count ++;
 
         printf("%d | ", movement_count);
@@ -230,16 +241,16 @@ void server_game_loop(const char *map)
 
 	switch(c) {
             case 'R':
-                printf("JOGADOR PERDEU\n");
+                lose_server();
                 break;
             case 'G':
-                printf("JOGADOR PERDEU\n");
+                lose_server();
                 break;
             case 'B':
-                printf("JOGADOR PERDEU\n");
+                lose_server();
                 break;
             case 'Y':
-                printf("JOGADOR PERDEU\n");
+                lose_server();
                 break;
             
             case '1':
@@ -274,12 +285,12 @@ void server_game_loop(const char *map)
         g.player_pos = next_pos;
         g.board[g.player_pos.x][g.player_pos.y] = 'P';
 
-        send_board(g);
+        send_board(g, 0);
     }
 
 }
 
-void send_board(game g)
+void send_board(game g, char first)
 {
     int width = g.light_level * 2 + 1;
     int area = width * width;
@@ -292,6 +303,8 @@ void send_board(game g)
         }
 
     message m = {area, M_VIS, buffer};
+    if (first)
+	    m.type = M_INIT;
     send_data(m);
     delete_message(&m);
 }
@@ -305,7 +318,9 @@ void client_game_loop()
 	    if (m.type == M_MP4 || m.type == M_TXT || m.type == M_JPG) {
 		    message_to_file(m);
 	    }
-        } while (m.type != M_VIS);
+	    if (m.type == M_LOSE)
+		exit(0);
+        } while (m.type != M_VIS && m.type != M_INIT);
 
         render_board(m.data, m.size);
 
