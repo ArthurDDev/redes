@@ -14,36 +14,17 @@ void setup_connection(char* interface)
 {
     CON.socket = cria_raw_socket(interface);
     CON.seq = 0;
-    for (int i = 0; i < 3; i ++)
-        CON.last_message[i] = 0;
 }
 
-// Compara o cabeçalho é valido
-// Retorna 1 se é inválido, 0 se é válido
 int validate_header(unsigned char *buffer)
 {
     if (buffer[0] != 0b01111110)
         return 1;
 
-    if (CON.seq != get_seq(buffer))
+    if (CON.seq != seq_from_buffer(buffer))
         return 1;
 
-    if (buffer[0] == CON.last_message[0] &&
-        buffer[1] == CON.last_message[1] &&
-        buffer[2] == CON.last_message[2]) {
-            
-        return 1;
-
-    }
-    
     return 0;
-}
-
-// Salva o cabeçalho da última mensagem lida
-void save_header(unsigned char *buffer)
-{
-    for (int i = 0; i < 3; i ++)
-        CON.last_message[i] = buffer[i];
 }
 
 char increment_seq()
@@ -51,6 +32,16 @@ char increment_seq()
     CON.seq = (CON.seq + 1) % MAX_SEQ;
 
     return CON.seq;
+}
+
+char next_seq()
+{
+    return CON.seq;
+}
+
+char seq_from_buffer(unsigned char *buffer)
+{
+    return (buffer[1] << 3 | buffer[2] >> 5) & 0b00111111;
 }
 
 void send_ack()
@@ -77,12 +68,6 @@ void send_nack()
     }
 }
 
-char get_seq(unsigned char *buffer)
-{
-    return (buffer[1] << 3 | buffer[2] >> 5) & 0b00111111;
-}
-
-
 char recieve_ack(char seq)
 {
     message m;
@@ -103,9 +88,8 @@ char recieve_ack(char seq)
         if (validate_header(buffer))
             continue;
 
-        //save_header(buffer);
         m = decode_message(buffer);
-        if (get_seq(buffer) != seq) {
+        if (seq_from_buffer(buffer) != seq) {
             delete_message(&m);
             continue;
         }
@@ -120,20 +104,57 @@ char recieve_ack(char seq)
             return 0;
         }
     }
-    //delete_message(&m);
+    
+    delete_message(&m);
+    
+    return 0;
+}
+
+char send_message(message m)
+{
+    unsigned char *buffer;
+    size_t siz = create_frame(m, &buffer);
+    if (siz < MIN_SIZE) {
+        buffer = realloc(buffer, MIN_SIZE);
+        siz = MIN_SIZE;
+    }
+
+    siz = format_buffer(&buffer, siz);
+
+    int timeouts = 0;
+    do {
+        timeouts ++;
+
+        if (timeouts > MAX_TIMEOUT) {
+            fprintf(stderr, "Timeout\n");
+            exit(1);
+        }
+
+        if (send(CON.socket, buffer, siz, 0) == -1) {
+            fprintf(stderr, "Erro ao enviar mensagem\n");
+            buffer = delete_frame(buffer);
+            return 1;
+        }
+
+        if (m.type == M_ACK || m.type == M_NACK) {
+            buffer = delete_frame(buffer);
+            return 0;
+        }
+    } while (!recieve_ack(CON.seq));
+
+    increment_seq();
+
     return 0;
 
 }
 
 message receive_message()
-{ //TODO: CRC
-  //TODO: Mensagens maiores
-  //TODO: Timeout
+{
     message m;
 
     unsigned char *buffer = malloc(64);
     if (buffer == NULL) {
-        printf("Erro ao alocar memoria\n");
+        fprintf(stderr, "Erro ao alocar memoria\n");
         exit(1);
     }
 
@@ -147,20 +168,21 @@ message receive_message()
 
         if (validate_header(buffer))
             continue;
-        save_header(buffer);
 
         m = decode_message(buffer);
-        if (m.size > 0 && !validate_frame(buffer, m.size + 4)) {
+        if (!validate_frame(buffer, m.size + 4)) {
             send_nack();
             continue;
         }
 
         if (m.type == M_ACK || m.type == M_NACK)
             continue;
-        CON.seq = get_seq(buffer);
+        CON.seq = seq_from_buffer(buffer);
 
         break;
     }
+
+    buffer = delete_frame(buffer);
 
     if (m.type != M_ACK && m.type != M_NACK)
         send_ack();
@@ -170,108 +192,51 @@ message receive_message()
     return m;
 }
 
-message receive_data()
+void send_file_data(message m)
 {
-    message m = receive_message();
+    int64_t size_left = m.size;
 
-    if (!(m.type == M_VIS
-        || m.type == M_DATA
-        || m.type == M_TXT
-        || m.type == M_JPG
-        || m.type == M_MP4 )) {
-            return m;
-    }
+    message t;
 
-    message ml = {m.size, m.type, malloc(m.size)};
-    memcpy(ml.data, m.data, m.size);
-    delete_message(&m);
+    t.data = malloc(sizeof(size_t) + 1);
+    t.type = m.type;
+    size_left -= 1;
+    t.data[0] = m.data[0];
+    for (size_t i = 1; i <= sizeof(size_t); i++)
+        t.data[i] = size_left >> (8 * (sizeof(size_t) - i));
+
+    t.size = 1 + sizeof(size_t);
+    send_message(t);
+    free(t.data);
+
+    int last_percentage = 0;
 
     do {
-        m = receive_message();
-        ml.size += m.size;
-        ml.data = realloc(ml.data, ml.size);
-        memcpy(ml.data + ml.size - m.size, m.data, m.size);
-        delete_message(&m);
-    } while (m.type != M_END);
+        t.type = M_DATA;
+        if (size_left > MAX_DATA)
+            t.size = MAX_DATA;
+        else
+            t.size = size_left;
 
-    return ml;
-}
+        t.data = &m.data[m.size - size_left];
 
-// IMPLEMENTADO DO JEITO BURRO IDIOTA INEFICIENTE SEM JANELA DESLIZANTE
-char next_seq()
-{
-    return CON.seq;
-}
+        send_message(t);
 
-size_t format_buffer(unsigned char **buffer, size_t size)
-{
-    *buffer = realloc(*buffer, size * 2);
-
-
-    size_t siz = size;
-    for (size_t i = 0; i < size * 2 - 1; i ++) {
-        if ((*buffer)[i] == 0x88 || (*buffer)[i] == 0x81) {
-            siz ++;
-            for (size_t j = size * 2 - 2; j > i; j --)
-                (*buffer)[j + 1] = (*buffer)[j];
-            (*buffer)[i + 1] = 0xFF;
-        }
-    }
-
-
-    return siz;
-}
-
-size_t restore_buffer(unsigned char **buffer, size_t size)
-{
-    size_t siz = size;
-    for (size_t i = 1; i < size; i ++) {
-        if ((*buffer)[i] == 0xFF && ((*buffer)[i-1] == 0x88 || (*buffer)[i-1] == 0x81)) {
-            siz --;
-            for (size_t j = i; j < size - 1; j ++)
-                (*buffer)[j] = (*buffer)[j + 1];
-        }
-    }
-    return siz;
-}
-
-char send_message(message m)
-{
-    unsigned char *buffer;
-    size_t siz = create_frame(m, &buffer);
-    if (siz < MIN_SIZE) {
-        buffer = realloc(buffer, MIN_SIZE);
-        siz = MIN_SIZE;
-    }
-    save_header(buffer);
-
-    siz = format_buffer(&buffer, siz);
-
-    int timeouts = 0;
-    do {
-        timeouts ++;
-        if (timeouts > MAX_TIMEOUT) {
-            fprintf(stderr, "Timeout\n");
-            exit(1);
+        int current_percentage = (m.size - size_left) * 100 / m.size;
+        if (current_percentage > last_percentage) {
+            printf("\033[H\033[J");
+            printf("Enviando arquivo: %d%%\n", current_percentage);
+            last_percentage = current_percentage;
         }
 
-        if (send(CON.socket, buffer, siz, 0) == -1) {
-            fprintf(stderr, "Erro ao enviar mensagem\n");
-            return 1;
-        }
+        size_left -= MAX_DATA;
+    } while (size_left > 0);
 
-        if (m.type == M_ACK || m.type == M_NACK)
-            return 0;
-    } while (!recieve_ack(CON.seq));
-    //delete_message(&r);
-
-    increment_seq();
-
-    return 0;
+    send_message((message){0, M_END, NULL});
 
 }
 
-size_t send_data(message m)
+void send_any_data(message m)
 {
     int64_t size_left = m.size;
 
@@ -291,12 +256,52 @@ size_t send_data(message m)
         size_left -= MAX_DATA;
     } while (size_left > 0);
 
-    if (m.type == M_VIS
+    if (m.type == M_VIS)
+        send_message((message){0, M_END, NULL});
+
+}
+
+size_t send_data(message m)
+{
+    if (is_file(m))
+        send_file_data(m);
+    else
+        send_any_data(m);
+    
+    return 1;
+}
+
+
+message receive_data()
+{
+    message m = receive_message();
+
+    if (!(m.type == M_VIS
         || m.type == M_DATA
         || m.type == M_TXT
         || m.type == M_JPG
-        || m.type == M_MP4)
-        send_message((message){0, M_END, NULL});
+        || m.type == M_MP4 )) {
+            return m;
+    }
 
-    return 1;
+    message ml;
+    if (is_file(m)) {
+        ml = (message){1, m.type, malloc(1)};
+        ml.data[0] = m.data[0];
+    }
+    else {
+        ml = (message){m.size, m.type, malloc(m.size)};
+        memcpy(ml.data, m.data, m.size);
+    }
+    delete_message(&m);
+
+    do {
+        m = receive_message();
+        ml.size += m.size;
+        ml.data = realloc(ml.data, ml.size);
+        memcpy(ml.data + ml.size - m.size, m.data, m.size);
+        delete_message(&m);
+    } while (m.type != M_END);
+
+    return ml;
 }

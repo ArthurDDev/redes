@@ -37,7 +37,7 @@ int cria_raw_socket(char* nome_interface_rede) {
         exit(-1);
     }
  
-    const int timeoutMillis = 300; // 300 milisegundos de timeout por exemplo
+    const int timeoutMillis = 300;
     struct timeval timeout = { .tv_sec = timeoutMillis / 1000, .tv_usec = (timeoutMillis % 1000) * 1000 };
     setsockopt(soquete, SOL_SOCKET, SO_RCVTIMEO, (char*) &timeout, sizeof(timeout));
 

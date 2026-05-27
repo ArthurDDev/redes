@@ -43,8 +43,6 @@ int validate_frame(unsigned char *frame, size_t size)
 
     unsigned char crc = get_crc(frame, size-1);
 
-    //printf("CRC Calculado: %x, CRC da mensagem: %x\n", crc, frame[size-1]);
-
     if (crc != frame[size-1])
         return 0;
 
@@ -116,4 +114,43 @@ uint8_t get_crc(const uint8_t *data, size_t size)
     return crc;
 }
 
+size_t format_buffer(unsigned char **buffer, size_t size)
+{
+    *buffer = realloc(*buffer, size * 2);
 
+
+    size_t siz = size;
+    for (size_t i = 0; i < size * 2 - 1; i ++) {
+        if ((*buffer)[i] == 0x88 || (*buffer)[i] == 0x81) {
+            siz ++;
+            for (size_t j = size * 2 - 2; j > i; j --)
+                (*buffer)[j + 1] = (*buffer)[j];
+            (*buffer)[i + 1] = 0xFF;
+        }
+    }
+
+
+    return siz;
+}
+
+size_t restore_buffer(unsigned char **buffer, size_t size)
+{
+    size_t siz = size;
+    for (size_t i = 1; i < size; i ++) {
+        if ((*buffer)[i] == 0xFF && ((*buffer)[i-1] == 0x88 || (*buffer)[i-1] == 0x81)) {
+            siz --;
+            for (size_t j = i; j < size - 1; j ++)
+                (*buffer)[j] = (*buffer)[j + 1];
+        }
+    }
+    return siz;
+}
+
+char is_file(message m) {
+    if (m.type == M_TXT
+        || m.type == M_JPG
+        || m.type == M_MP4)
+        return 1;
+    
+    return 0;
+}

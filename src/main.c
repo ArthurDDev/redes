@@ -28,16 +28,16 @@ int main(int argc, char **argv)
     
     server_game_loop(map);
 
-    // size_t s;
-    // unsigned char *buffer = file_to_message("foto.jpg", &s);
-    // send_data((message){s, M_JPG, buffer});
+    //size_t s;
+    //unsigned char *buffer = file_to_message("teste.mp4", &s);
+    //send_data((message){s, M_MP4, buffer});
 
 #else
     
     client_game_loop();
 
-    // message m = receive_data();
-    // message_to_file(m);
+    //message m = receive_data();
+    //message_to_file(m);
 
 #endif
 
