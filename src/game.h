@@ -31,6 +31,10 @@ struct game {
     char board[WIDTH][HEIGHT];
     unsigned char light_level;
     point player_pos;
+    ghost red;
+    ghost blue;
+    ghost green;
+    ghost yellow;
 };
 typedef struct game game;
 

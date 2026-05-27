@@ -179,11 +179,6 @@ void server_game_loop(const char *map)
     game g = make_game(map);
     send_board(g);
 
-    ghost red = {'R', {3, 4}, RIGHT};
-    ghost green = {'G', {30, 30}, RIGHT};
-    ghost blue = {'B', {30, 30}, RIGHT};
-    ghost yellow = {'Y', {30, 30}, RIGHT};
-
     message m;
     int movement_count = 1;
     while (1) {
@@ -199,27 +194,27 @@ void server_game_loop(const char *map)
             m = receive_data();
         } while (!is_movement_type(m.type));
 
-        red_movement(&g, &red);
-        green_movement(&g, &green);
-        blue_movement(&g, &blue);
-        yellow_movement(&g, &yellow);
+        red_movement(&g, &g.red);
+        green_movement(&g, &g.green);
+        blue_movement(&g, &g.blue);
+        yellow_movement(&g, &g.yellow);
             
         point next_pos = g.player_pos;
         switch(m.type) {
             case M_UP:
-                printf("MOVENTO PARA CIMA\n");
+                printf("MOVIMENTO PARA CIMA\n");
                 next_pos.y --;
                 break;
             case M_DOWN:
-                printf("MOVENTO PARA BAIXO\n");
+                printf("MOVIMENTO PARA BAIXO\n");
                 next_pos.y ++;
                 break;
             case M_RIGHT:
-                printf("MOVENTO PARA DIREITA\n");
+                printf("MOVIMENTO PARA DIREITA\n");
                 next_pos.x ++;
                 break;
             case M_LEFT:
-                printf("MOVENTO PARA ESQUERDA\n");
+                printf("MOVIMENTO PARA ESQUERDA\n");
                 next_pos.x --;
                 break;      
         }
@@ -365,7 +360,6 @@ void render_board(unsigned char *board, size_t size)
 		  if (board[i+j] == '0')
 		    printf(" ");
           else if (board[i+j] == '#')
-            //printf("█");
 	        printf("#");
 		  else 
             printf("%c", board[i + j]);
@@ -379,10 +373,10 @@ game make_game(const char *map)
     game g;
     g.light_level = 1;
     g.player_pos = (point){1, 1};
-    ghost red = {'R', {1, 25}, RIGHT};
-    ghost green = {'G', {30, 15}, DOWN};
-    ghost blue = {'B', {30, 30}, RIGHT};
-    ghost yellow = {'Y', {4, 35}, LEFT};
+    g.red = (ghost){'R', {1, 25}, RIGHT};
+    g.green = (ghost){'G', {30, 15}, DOWN};
+    g.blue = (ghost){'B', {30, 30}, RIGHT};
+    g.yellow = (ghost){'Y', {4, 35}, LEFT};
 
     const char *ufpr_board[] = {
         "########################################",
@@ -471,16 +465,16 @@ game make_game(const char *map)
                             g.player_pos = (point){col,i};
                             break;
                         case 'R':
-                            red = {'R', {col, i}, RIGHT};
+                            g.red = (ghost){'R', {col, i}, RIGHT};
                             break;
                         case 'G':
-                            green = {'G', {col, i}, RIGHT};
+                            g.green = (ghost){'G', {col, i}, RIGHT};
                             break;
                         case 'B':
-                            blue = {'B', {col, i}, RIGHT};
+                            g.blue = (ghost){'B', {col, i}, RIGHT};
                             break;
                         case 'Y':
-                            yellow = {'Y', {col, i}, RIGHT};
+                            g.yellow = (ghost){'Y', {col, i}, RIGHT};
                             break;
                     }
 
