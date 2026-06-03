@@ -45,6 +45,7 @@ game make_game(const char *map);
 void server_process(game g);
 void send_board(game g, char first);
 point get_element(char el);
+void lose_server();
 
 // CLIENTE
 void client_game_loop();
@@ -60,4 +61,5 @@ int can_move(game *g, point p);
 int move_ghost(game *g, ghost *gh, direction dir);
 
 long aleat (long min, long max);
+point valid_point(game *g);
 #endif

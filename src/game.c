@@ -103,6 +103,10 @@ int move_ghost(game *g, ghost *ghost, direction dir)
 {
     point next = next_position(ghost->pos, dir);
 
+    if (next.x == g->player_pos.x && next.y == g->player_pos.y){
+        lose_server();
+    }
+
     if (!can_move(g, next))
         return 0;
 
@@ -135,7 +139,7 @@ void red_movement(game *g, ghost *ghost)
 // Azul – regra da mão direita
 void blue_movement(game *g, ghost *ghost)
 {
-    
+
     if (move_ghost(g, ghost, ghost->dir))
         return;
 
@@ -148,17 +152,38 @@ void blue_movement(game *g, ghost *ghost)
     move_ghost(g, ghost, turn_back(ghost->dir));
 }
 
-// Verde – alterna direita e esquerda 
+// Verde – alterna direita e esquerda
 void green_movement(game *g, ghost *ghost)
 {
     static int toggle = 0;
 
-    if (toggle == 0)
-        red_movement(g, ghost);
-    else
-        blue_movement(g, ghost);
+    if (move_ghost(g, ghost, ghost->dir))
+        return;
 
-    toggle = !toggle;
+    if (toggle == 0) {
+        if (move_ghost(g, ghost, turn_left(ghost->dir))) {
+            toggle = 1;
+            return;
+        }
+
+        if (move_ghost(g, ghost, turn_right(ghost->dir))) {
+            toggle = 1;
+            return;
+        }
+    }
+    else {
+        if (move_ghost(g, ghost, turn_right(ghost->dir))) {
+            toggle = 0;
+            return;
+        }
+
+        if (move_ghost(g, ghost, turn_left(ghost->dir))) {
+            toggle = 0;
+            return;
+        }
+    }
+
+    move_ghost(g, ghost, turn_back(ghost->dir));
 }
 
 // Amarelo – aleatório
@@ -209,7 +234,7 @@ void server_game_loop(const char *map)
         green_movement(&g, &g.green);
         blue_movement(&g, &g.blue);
         yellow_movement(&g, &g.yellow);
-            
+
         point next_pos = g.player_pos;
         switch(m.type) {
             case M_UP:
@@ -227,7 +252,7 @@ void server_game_loop(const char *map)
             case M_LEFT:
                 printf("MOVIMENTO PARA ESQUERDA\n");
                 next_pos.x --;
-                break;      
+                break;
         }
 
         char c = get_pos(next_pos.x, next_pos.y, g);
@@ -237,7 +262,7 @@ void server_game_loop(const char *map)
         }
 
 	size_t siz;
-        unsigned char *data;
+    unsigned char *data;
 
 	switch(c) {
             case 'R':
@@ -252,7 +277,7 @@ void server_game_loop(const char *map)
             case 'Y':
                 lose_server();
                 break;
-            
+
             case '1':
                 data = file_to_message("1.txt", &siz);
 		send_data((message){siz, M_TXT, data});
@@ -279,7 +304,7 @@ void server_game_loop(const char *map)
                 break;
 
         }
-        
+
         if (get_pos(g.player_pos.x, g.player_pos.y, g) == 'P')
             g.board[g.player_pos.x][g.player_pos.y] = '0';
         g.player_pos = next_pos;
@@ -336,17 +361,17 @@ void client_game_loop()
                     send_message((message){0, M_UP, NULL});
                     valid = 1;
                     break;
-                
+
                 case 's':
                     send_message((message){0, M_DOWN, NULL});
                     valid = 1;
                     break;
-            
+
                 case 'a':
                     send_message((message){0, M_LEFT, NULL});
                     valid = 1;
                     break;
-        
+
                 case 'd':
                     send_message((message){0, M_RIGHT, NULL});
                     valid = 1;
@@ -376,7 +401,7 @@ void render_board(unsigned char *board, size_t size)
 		    printf(" ");
           else if (board[i+j] == '#')
 	        printf("#");
-		  else 
+		  else
             printf("%c", board[i + j]);
 	}
         printf("\n");
@@ -389,22 +414,17 @@ game make_game(const char *map)
     g.light_level = 1;
     g.player_pos = (point){1, 1};
 
-    g.red = (ghost){'R', {aleat(0, 40), aleat(0, 40)}, RIGHT};
-    g.green = (ghost){'G', {aleat(0, 40), aleat(0, 40)}, DOWN};
-    g.blue = (ghost){'B', {aleat(0, 40), aleat(0, 40)}, RIGHT};
-    g.yellow = (ghost){'Y', {aleat(0, 40), aleat(0, 40)}, LEFT};
-
     const char *ufpr_board[] = {
         "########################################",
         "#P000000000000000000000000000000000000#",
+        "#00#########00#######################0#",
+        "#0000000000000000000000000000000000000#",
+        "#00######00#############00#####000##00#",
+        "#0000000000000000000000000000000000000#",
+        "#00#########00#######################0#",
         "#0000000000000000000000000000000000000#",
         "#0000000000000000000000000000000000000#",
-        "#0000000000000000000000000000000000000#",
-        "#0000000000000000000000000000000000000#",
-        "#0000000000000000000000000000000000000#",
-        "#0000000000000000000000000000000000000#",
-        "#0000000000000000000000000000000000000#",
-        "#0000000000000000000000000000000000000#",
+        "#00#########00#######################0#",
         "#0000000000000000000000000000000000000#",
         "#0000#0#0000#####000#####000####000000#",
         "#0000#0#0000#0000000#000#000#000#00000#",
@@ -416,23 +436,23 @@ game make_game(const char *map)
         "#0000#0#0000#0000000#0000000#000#00000#",
         "#0000###0000#0000000#0000000#000#00000#",
         "#0000000000000000000000000000000000000#",
+        "#00######00#############00#####000##00#",
         "#0000000000000000000000000000000000000#",
+        "#00#########00#######################0#",
         "#0000000000000000000000000000000000000#",
+        "#00######00#############00#####000##00#",
         "#0000000000000000000000000000000000000#",
+        "#00#########00#######################0#",
         "#0000000000000000000000000000000000000#",
+        "#00#########00#######################0#",
         "#0000000000000000000000000000000000000#",
+        "#00######00#############00#####000##00#",
         "#0000000000000000000000000000000000000#",
+        "#00#########00#######################0#",
         "#0000000000000000000000000000000000000#",
+        "#00######00#############00#####000##00#",
         "#0000000000000000000000000000000000000#",
-        "#0000000000000000000000000000000000000#",
-        "#0000000000000000000000000000000000000#",
-        "#0000000000000000000000000000000000000#",
-        "#0000000000000000000000000000000000000#",
-        "#0000000000000000000000000000000000000#",
-        "#0000000000000000000000000000000000000#",
-        "#0000000000000000000000000000000000000#",
-        "#0000000000000000000000000000000000000#",
-        "#0000000000000000000000000000000000000#",
+        "#00#########00#######################0#",
         "#0000000000000000000000000000000000000#",
         "########################################"
     };
@@ -443,14 +463,22 @@ game make_game(const char *map)
             for (int j = 0; j < WIDTH; j ++)
                 g.board[j][i] = ufpr_board[i][j];
 
-        for (int i = 0; i < 6; i++){
-            int x = aleat(0, 40);
-            int y = aleat(0, 40);
-
-            if (g.board[x][y] == '0')
-                g.board[x][y] = i + '0';
+        for (int i = 1; i <= 6; i++){
+            point p = valid_point(&g);
+            int x = p.x;
+            int y = p.y;
+            g.board[x][y] = i + '0';
         }
-    } 
+
+        g.red = (ghost){'R', valid_point(&g), RIGHT};
+        g.green = (ghost){'G', valid_point(&g), DOWN};
+        g.blue = (ghost){'B', valid_point(&g), RIGHT};
+        g.yellow = (ghost){'Y', valid_point(&g), LEFT};
+        g.board[g.red.pos.x][g.red.pos.y] = 'R';
+        g.board[g.green.pos.x][g.green.pos.y] = 'G';
+        g.board[g.blue.pos.x][g.blue.pos.y] = 'B';
+        g.board[g.yellow.pos.x][g.yellow.pos.y] = 'Y';
+    }
     else {
         FILE *csv = fopen(map, "r");
 
@@ -516,7 +544,15 @@ game make_game(const char *map)
 
 long aleat (long min, long max)
 {
-  return ((rand() % (max - min + 1)) + min); 
+  return ((rand() % (max - min + 1)) + min);
 }
 
+point valid_point(game *g)
+{
+    while (1) {
+        point p = {aleat(0, WIDTH-1), aleat(0, HEIGHT-1)};
 
+        if (g->board[p.x][p.y] == '0')
+            return p;
+    }
+}
