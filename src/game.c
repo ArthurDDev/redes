@@ -412,11 +412,10 @@ game make_game(const char *map)
 {
     game g;
     g.light_level = 1;
-    g.player_pos = (point){1, 1};
 
     const char *ufpr_board[] = {
         "########################################",
-        "#P000000000000000000000000000000000000#",
+        "#0000000000000000000000000000000000000#",
         "#00#########00#######################0#",
         "#0000000000000000000000000000000000000#",
         "#00######00#############00#####000##00#",
@@ -470,10 +469,12 @@ game make_game(const char *map)
             g.board[x][y] = i + '0';
         }
 
+        g.player_pos = valid_point(&g);
         g.red = (ghost){'R', valid_point(&g), RIGHT};
         g.green = (ghost){'G', valid_point(&g), DOWN};
         g.blue = (ghost){'B', valid_point(&g), RIGHT};
         g.yellow = (ghost){'Y', valid_point(&g), LEFT};
+        g.board[g.player_pos.x][g.player_pos.y] = 'P';
         g.board[g.red.pos.x][g.red.pos.y] = 'R';
         g.board[g.green.pos.x][g.green.pos.y] = 'G';
         g.board[g.blue.pos.x][g.blue.pos.y] = 'B';
