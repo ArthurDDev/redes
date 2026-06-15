@@ -210,8 +210,20 @@ void lose_server()
 	exit(0);
 }
 
+void win_server()
+{
+    size_t siz;
+    unsigned char *data = file_to_message("venceu.txt", &siz);
+    send_data((message){siz, M_TXT, data});
+    free(data);
+
+    send_data((message){0, M_WIN, NULL});
+    exit(0);
+}
+
 void server_game_loop(const char *map)
 {
+    int pastilhas_comidas = 0;
     game g = make_game(map);
     send_board(g, 1);
 
@@ -280,30 +292,39 @@ void server_game_loop(const char *map)
 
             case '1':
                 data = file_to_message("1.txt", &siz);
-		send_data((message){siz, M_TXT, data});
+		        send_data((message){siz, M_TXT, data});
+                pastilhas_comidas ++;
                 break;
             case '2':
                 data = file_to_message("2.txt", &siz);
-		send_data((message){siz, M_TXT, data});
+		        send_data((message){siz, M_TXT, data});
+                pastilhas_comidas ++;
                 break;
             case '3':
                 data = file_to_message("3.jpg", &siz);
-		send_data((message){siz, M_JPG, data});
+		        send_data((message){siz, M_JPG, data});
+                pastilhas_comidas ++;
                 break;
             case '4':
                 data = file_to_message("4.jpg", &siz);
-		send_data((message){siz, M_JPG, data});
+		        send_data((message){siz, M_JPG, data});
+                pastilhas_comidas ++;
                 break;
             case '5':
                 data = file_to_message("5.mp4", &siz);
-		send_data((message){siz, M_MP4, data});
+		        send_data((message){siz, M_MP4, data});
+                pastilhas_comidas ++;
                 break;
             case '6':
                 data = file_to_message("6.mp4", &siz);
-		send_data((message){siz, M_MP4, data});
+		        send_data((message){siz, M_MP4, data});
+                pastilhas_comidas ++;
                 break;
 
         }
+
+        if (pastilhas_comidas == 6)
+            win_server();
 
         if (get_pos(g.player_pos.x, g.player_pos.y, g) == 'P')
             g.board[g.player_pos.x][g.player_pos.y] = '0';
@@ -344,7 +365,9 @@ void client_game_loop()
 		    message_to_file(m);
 	    }
 	    if (m.type == M_LOSE)
-		exit(0);
+		    exit(0);
+        if (m.type == M_WIN)
+            exit(0);
         } while (m.type != M_VIS && m.type != M_INIT);
 
         render_board(m.data, m.size);
@@ -420,7 +443,7 @@ game make_game(const char *map)
         "#0000000000000000000000000000000000000#",
         "#00######00#############00#####000##00#",
         "#0000000000000000000000000000000000000#",
-        "#00#########00#######################0#",
+        "############00######00#######00########",
         "#0000000000000000000000000000000000000#",
         "#0000000000000000000000000000000000000#",
         "#00#########00#######################0#",
@@ -445,7 +468,7 @@ game make_game(const char *map)
         "#0000000000000000000000000000000000000#",
         "#00#########00#######################0#",
         "#0000000000000000000000000000000000000#",
-        "#00######00#############00#####000##00#",
+        "#########00#######00####00#####000##00#",
         "#0000000000000000000000000000000000000#",
         "#00#########00#######################0#",
         "#0000000000000000000000000000000000000#",
