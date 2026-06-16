@@ -7,6 +7,7 @@
 #include "net.h"
 #include "socket.h"
 #include "files.h"
+#include "logs.h"
 
 int main(int argc, char **argv)
 {
@@ -15,11 +16,13 @@ int main(int argc, char **argv)
         exit(1);
     }
 
+
     setup_connection(argv[1]);
 
     srand(time(NULL));
 
 #ifdef SERVER
+    start_log("server.txt");
 
     const char *map = "";
 
@@ -29,10 +32,14 @@ int main(int argc, char **argv)
     server_game_loop(map);
 
 #else
-    
+    start_log("client.txt");
+
     client_game_loop();
 
 #endif
+
+    flog("Isso é um log\n");
+    end_log();
 
     return 0;
 }
