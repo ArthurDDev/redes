@@ -38,7 +38,7 @@ void start_log(char *filename)
 
 void flog(const char *str)
 {
-    fprintf(log_file, str);
+    fprintf(log_file, "%s", str);
 }
 
 void end_log()
