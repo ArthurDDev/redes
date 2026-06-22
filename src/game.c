@@ -7,6 +7,7 @@
 #include "message.h"
 #include "net.h"
 #include "files.h"
+#include "logs.h"
 
 int is_movement_type(char type) {
     if (type == M_UP
@@ -361,15 +362,17 @@ void client_game_loop()
         message m;
         do {
             m = receive_data();
-	    if (m.type == M_MP4 || m.type == M_TXT || m.type == M_JPG) {
-		    message_to_file(m);
-	    }
-	    if (m.type == M_LOSE)
-		    exit(0);
-        if (m.type == M_WIN)
-            exit(0);
+            if (m.type == M_MP4 || m.type == M_TXT || m.type == M_JPG) {
+                flog("Arquivo recebido", LOG_REC);
+                message_to_file(m);
+            }
+            if (m.type == M_LOSE)
+                exit(0);
+            if (m.type == M_WIN)
+                exit(0);
         } while (m.type != M_VIS && m.type != M_INIT);
 
+        flog("Mapa Recebido", LOG_REC);
         render_board(m.data, m.size);
 
         char move;
@@ -381,26 +384,30 @@ void client_game_loop()
             valid = 0;
             switch(move) {
                 case 'w':
+                    flog("Movimento para cima", LOG_SENT);
                     send_message((message){0, M_UP, NULL});
                     valid = 1;
                     break;
 
                 case 's':
+                    flog("Movimento para baixo", LOG_SENT);
                     send_message((message){0, M_DOWN, NULL});
                     valid = 1;
                     break;
 
                 case 'a':
+                    flog("Movimento para esquerda", LOG_SENT);
                     send_message((message){0, M_LEFT, NULL});
                     valid = 1;
                     break;
 
                 case 'd':
+                    flog("Movimento para direita", LOG_SENT);
                     send_message((message){0, M_RIGHT, NULL});
                     valid = 1;
                     break;
             }
-        } while (valid == 0);
+        }   while (valid == 0);
     }
 }
 

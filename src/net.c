@@ -1,6 +1,7 @@
 #include "net.h"
 #include "socket.h"
 #include "message.h"
+#include "logs.h"
 
 #include <string.h>
 #include <time.h>
@@ -78,7 +79,7 @@ char recieve_ack(char seq)
     while (1) {
         time(&current_time);
         if (current_time - start_time > TIMEOUT) {
-            fprintf(stderr, "timeoutizinho\n");
+            flog("", LOG_TIMEOUT);
             break;
         }
         if (recv(CON.socket, buffer, 64, 0) == -1) {
@@ -95,11 +96,13 @@ char recieve_ack(char seq)
         }
 
         if (m.type == M_ACK) {
+            flog("", LOG_ACK);
             delete_message(&m);
             return 1;
         }
 
         if (m.type == M_NACK) {
+            flog("", LOG_NACK);
             delete_message(&m);
             return 0;
         }
@@ -222,8 +225,9 @@ void send_file_data(message m)
 
         int current_percentage = (m.size - size_left) * 100 / m.size;
         if (current_percentage > last_percentage) {
-            printf("\033[H\033[J");
-            printf("Enviando arquivo: %d%%\n", current_percentage);
+            char msg[50];
+            snprintf(msg, sizeof(msg), "Enviando arquivo: %d%%", current_percentage);
+            flog(msg, LOG_PROGRESS);
             last_percentage = current_percentage;
         }
 
@@ -231,7 +235,7 @@ void send_file_data(message m)
     } while (size_left > 0);
 
     send_message((message){0, M_END, NULL});
-
+    flog("Enviando arquivo: 100%%", LOG_PROGRESS);
 }
 
 void send_any_data(message m)
@@ -261,17 +265,23 @@ void send_any_data(message m)
 
 size_t send_data(message m)
 {
+    log_state = LOP_DATA;
+
     if (is_file(m))
         send_file_data(m);
     else
         send_any_data(m);
     
+    log_state = LOP_ALL;
+
     return 1;
 }
 
 
 message receive_data()
 {
+    log_state = LOP_DATA;
+
     message m = receive_message();
 
     if (!(m.type == M_VIS
@@ -279,6 +289,8 @@ message receive_data()
         || m.type == M_TXT
         || m.type == M_JPG
         || m.type == M_MP4 )) {
+
+            log_state = LOP_ALL;
             return m;
     }
 
@@ -300,6 +312,8 @@ message receive_data()
         memcpy(ml.data + ml.size - m.size, m.data, m.size);
         delete_message(&m);
     } while (m.type != M_END);
+
+    log_state = LOP_ALL;
 
     return ml;
 }

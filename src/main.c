@@ -22,24 +22,19 @@ int main(int argc, char **argv)
     srand(time(NULL));
 
 #ifdef SERVER
-    start_log("server.txt");
-
+    start_log("server.log");
     const char *map = "";
 
     if (argc == 3)
         map = argv[2];
     
     server_game_loop(map);
-
-#else
-    start_log("client.txt");
-
-    client_game_loop();
-
-#endif
-
-    flog("Isso é um log\n");
     end_log();
+#else
+    start_log("client.log");
+    client_game_loop();
+    end_log();
+#endif
 
     return 0;
 }

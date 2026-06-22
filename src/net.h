@@ -14,7 +14,6 @@
 struct connection {
     int socket;
     short seq;
-    //char last_message[3];
 };
 
 extern struct connection CON;
