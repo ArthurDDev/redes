@@ -11,6 +11,9 @@
 #define TIMEOUT 2
 #define MAX_TIMEOUT 5
 
+// Tirar o comentário dessa linha para injetar x% de pacotes errados e testar os nacks
+//#define TESTE_NACKS x
+
 struct connection {
     int socket;
     short seq;

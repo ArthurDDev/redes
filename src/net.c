@@ -51,7 +51,7 @@ void send_ack()
     create_frame((message){0, M_ACK, NULL}, &buffer);
 
     if (send(CON.socket, buffer, 20, 0) == -1) {
-        fprintf(stderr, "Erro ao enviar ACK\n");
+        flog("Erro ao enviar ack", LOG_ERROR);
         return;
     }
 }
@@ -61,10 +61,10 @@ void send_nack()
     unsigned char *buffer = malloc(20);
     create_frame((message){0, M_NACK, NULL}, &buffer);
 
-    printf("ENVIANDO NACK\n");
+    flog("Pacote errado", LOG_WARNING);
 
     if (send(CON.socket, buffer, 20, 0) == -1) {
-        fprintf(stderr, "Erro ao enviar NACK\n");
+        flog("Erro ao enviar NACK", LOG_ERROR);
         return;
     }
 }
@@ -98,21 +98,25 @@ char recieve_ack(char seq)
         if (m.type == M_ACK) {
             flog("", LOG_ACK);
             delete_message(&m);
-            return 1;
+            return 0;
         }
 
         if (m.type == M_NACK) {
             flog("", LOG_NACK);
             delete_message(&m);
-            return 0;
+            return 1;
         }
     }
     
-    return 0;
+    flog("", LOG_TIMEOUT);
+    return 2;
 }
 
 char send_message(message m)
 {
+    if (LOG_EVERYTHING)
+        flog("Mensagem normal", LOG_SENT);
+
     unsigned char *buffer;
     size_t siz = create_frame(m, &buffer);
     if (siz < MIN_SIZE) {
@@ -123,13 +127,29 @@ char send_message(message m)
     siz = format_buffer(&buffer, siz);
 
     int timeouts = 0;
+    int resp = 3;
     do {
-        timeouts ++;
-
         if (timeouts > MAX_TIMEOUT) {
-            fprintf(stderr, "Timeout\n");
+            flog("Conexão perdida", LOG_ERROR);
             exit(1);
         }
+
+#ifdef TESTE_NACKS
+
+// Injeta pacotes com dados errados
+        unsigned char *buffer;
+        size_t siz = create_frame(m, &buffer);
+        if (siz < MIN_SIZE) {
+            buffer = realloc(buffer, MIN_SIZE);
+            siz = MIN_SIZE;
+        }
+
+        siz = format_buffer(&buffer, siz);
+        if (rand() % 100 < TESTE_NACKS) {
+            buffer[rand() % siz] ++;
+        }
+
+#endif
 
         if (send(CON.socket, buffer, siz, 0) == -1) {
             fprintf(stderr, "Erro ao enviar mensagem\n");
@@ -141,7 +161,12 @@ char send_message(message m)
             buffer = delete_frame(buffer);
             return 0;
         }
-    } while (!recieve_ack(CON.seq));
+
+        resp = recieve_ack(CON.seq);
+        if (resp == 2)
+            timeouts ++;
+
+    } while (resp != 0);
 
     increment_seq();
 
@@ -267,6 +292,7 @@ void send_any_data(message m)
 
 size_t send_data(message m)
 {
+    if (!LOG_EVERYTHING)
     log_state = LOP_DATA;
 
     if (is_file(m)) {
@@ -274,8 +300,8 @@ size_t send_data(message m)
         send_file_data(m);
     }
     else {
-        send_any_data(m);
         flog("DADOS", LOG_PROGRESS);
+        send_any_data(m);
     }
     
     log_state = LOP_ALL;
@@ -287,6 +313,7 @@ size_t send_data(message m)
 
 message receive_data()
 {
+    if (!LOG_EVERYTHING)
     log_state = LOP_DATA;
 
     message m = receive_message();

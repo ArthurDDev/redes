@@ -6,6 +6,10 @@
 extern FILE *log_file;
 extern char log_state;
 
+// Faz log de todas as mensagens enviadas
+// Fica tudo mais lento de tanto print
+#define LOG_EVERYTHING 0
+
 enum log_type {
     LOG_PROGRESS,
     LOG_SENT,

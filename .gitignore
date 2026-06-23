@@ -3,3 +3,5 @@ server
 client
 
 *.log
+
+p.txt

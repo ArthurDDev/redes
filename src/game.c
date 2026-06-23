@@ -243,6 +243,8 @@ void server_game_loop(const char *map)
             m = receive_data();
         } while (!is_movement_type(m.type));
 
+        flog("Movimento", LOG_REC);
+
         red_movement(&g, &g.red);
         green_movement(&g, &g.green);
         blue_movement(&g, &g.blue);
