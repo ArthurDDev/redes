@@ -422,6 +422,7 @@ void render_board(unsigned char *board, size_t size)
 
     size_t width = sqrt(size);
 
+
     if (size % width != 0) {
         fprintf(stderr, "O tabuleiro não é quadrado\n");
         return;
@@ -529,7 +530,10 @@ game make_game(const char *map)
 
             char line[256];
 
-            for (int i = 0; i < HEIGHT; i++) {
+	// 654321YBGRP
+	size_t used = 0;
+
+	for (int i = 0; i < HEIGHT; i++) {
 
                 if (!fgets(line, sizeof(line), csv))
                     break;
@@ -545,28 +549,64 @@ game make_game(const char *map)
 
                     g.board[col][i] = c;
 
+			
+
                     switch(c){
                         case 'P':
                             g.player_pos = (point){col,i};
+				used |= 1;
                             break;
                         case 'R':
                             g.red = (ghost){'R', {col, i}, RIGHT};
+			    used |= 1<1;
                             break;
                         case 'G':
                             g.green = (ghost){'G', {col, i}, RIGHT};
+			    used |= 1<2;
                             break;
                         case 'B':
                             g.blue = (ghost){'B', {col, i}, RIGHT};
+			    used |= 1<3;
                             break;
                         case 'Y':
                             g.yellow = (ghost){'Y', {col, i}, RIGHT};
+			    used |= 1<4;
                             break;
                     }
+		    if (c >= '1' && c <= '6')
+			used |= 1<(4 + c-'0');
 
                     tok = strtok(NULL,",\n");
                     col++;
                 }
             }
+
+		if ((used &= 1) == 0) {
+	        	g.player_pos = valid_point(&g);
+	        	g.board[g.player_pos.x][g.player_pos.y] = 'P';
+		} if ((used &= 1<1) == 0) {
+	        	g.red = (ghost){'R', valid_point(&g), RIGHT};
+	        	g.board[g.red.pos.x][g.red.pos.y] = 'R';
+		} if ((used &= 1<2) == 0) {
+	        	g.green = (ghost){'G', valid_point(&g), DOWN};
+	        	g.board[g.green.pos.x][g.green.pos.y] = 'G';
+		} if ((used &= 1<3) == 0) {
+	        	g.blue = (ghost){'B', valid_point(&g), RIGHT};
+        		g.board[g.blue.pos.x][g.blue.pos.y] = 'B';
+		} if ((used &= 1<4) == 0) {
+	        	g.yellow = (ghost){'Y', valid_point(&g), LEFT};
+        		g.board[g.yellow.pos.x][g.yellow.pos.y] = 'Y';
+		}
+
+		for (int i = 1; i <= 6; i++){
+			if (used &= 1<(4+i))
+				continue;
+	            point p = valid_point(&g);
+	            int x = p.x;
+	            int y = p.y;
+	            g.board[x][y] = i + '0';
+        	}
+
 
             fclose(csv);
         }
