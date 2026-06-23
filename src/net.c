@@ -11,6 +11,8 @@
 
 struct connection CON;
 
+void send_ack();
+
 void setup_connection(char* interface)
 {
     CON.socket = cria_raw_socket(interface);
@@ -22,8 +24,15 @@ int validate_header(unsigned char *buffer)
     if (buffer[0] != 0b01111110)
         return 1;
 
-    if (CON.seq != seq_from_buffer(buffer))
-        return 1;
+    char seq = seq_from_buffer(buffer);
+    if (CON.seq != seq) {
+	if (CON.seq == (seq + 1) % MAX_SEQ) {
+		CON.seq = (CON.seq + MAX_SEQ - 1 ) % MAX_SEQ;
+		send_ack();
+		CON.seq = (CON.seq + 1) % MAX_SEQ;
+	}
+        return 1;	
+    }
 
     return 0;
 }
