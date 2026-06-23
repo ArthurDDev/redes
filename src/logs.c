@@ -44,9 +44,10 @@ void flog(const char *str, char type)
         return;
 
     if (log_state == LOP_DATA && !(
-        type == LOG_ERROR || type == LOG_PROGRESS || type != LOG_WARNING || type != LOG_TIMEOUT
-    ))
+        type == LOG_ERROR || type == LOG_PROGRESS || type == LOG_WARNING || type == LOG_TIMEOUT
+    )) {
         return;
+    }
 
     switch(type) {
         case LOG_ERROR:
@@ -62,7 +63,10 @@ void flog(const char *str, char type)
             fprintf(log_file, "[\e[0;93m AVISO\e[0m ] %s\n", str);
         break;
         case LOG_ACK:
-            //fprintf(log_file, " [\e[0;92m ACK\e[0m ]\n");
+            if (log_state == LOP_DATA)
+                fprintf(log_file, "*");
+            else 
+                fprintf(log_file, " [\e[0;92m ACK\e[0m ]\n");
         break;
         case LOG_NACK:
             fprintf(log_file, " [\e[0;93m NACK\e[0m ]");
@@ -71,9 +75,7 @@ void flog(const char *str, char type)
             fprintf(log_file, " [\e[0;93m TIMEOUT\e[0m ]");
         break;
         case LOG_PROGRESS:
-            fprintf(log_file, " [\e[0;96m ENVIANDO %s\e[0m ]", str);
-            int siz = strlen(str) + strlen(" [\e[0;96m ENVIANDO \e[0m ]");
-            fseek(log_file, -siz, SEEK_CUR);
+            fprintf(log_file, "[\e[0;96m ENVIANDO %s\e[0m ]", str);
         break;
         case LOG_SUCCESS:
             fprintf(log_file, " [\e[0;92m SUCESSO\e[0m ]\n");

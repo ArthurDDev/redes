@@ -210,7 +210,7 @@ void send_file_data(message m)
     send_message(t);
     free(t.data);
 
-    int last_percentage = 0;
+    //int last_percentage = 0;
 
     do {
         t.type = M_DATA;
@@ -223,6 +223,7 @@ void send_file_data(message m)
 
         send_message(t);
 
+        /*
         int current_percentage = (m.size - size_left) * 100 / m.size;
         if (current_percentage > last_percentage) {
             char msg[50];
@@ -230,12 +231,13 @@ void send_file_data(message m)
             flog(msg, LOG_PROGRESS);
             last_percentage = current_percentage;
         }
+        */
 
         size_left -= MAX_DATA;
     } while (size_left > 0);
 
     send_message((message){0, M_END, NULL});
-    flog("Enviando arquivo: 100%%", LOG_PROGRESS);
+    //flog("Enviando arquivo: 100%%", LOG_PROGRESS);
 }
 
 void send_any_data(message m)
@@ -267,12 +269,17 @@ size_t send_data(message m)
 {
     log_state = LOP_DATA;
 
-    if (is_file(m))
+    if (is_file(m)) {
+        flog("ARQUIVO", LOG_PROGRESS);
         send_file_data(m);
-    else
+    }
+    else {
         send_any_data(m);
+        flog("DADOS", LOG_PROGRESS);
+    }
     
     log_state = LOP_ALL;
+    flog("", LOG_SUCCESS);
 
     return 1;
 }
