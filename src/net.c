@@ -25,8 +25,11 @@ int validate_header(unsigned char *buffer)
         return 1;
 
     char seq = seq_from_buffer(buffer);
+
+    message m = decode_message(buffer);
+
     if (CON.seq != seq) {
-	if (CON.seq == (seq + 1) % MAX_SEQ) {
+	if (CON.seq == (seq + 1) % MAX_SEQ && m.type != M_ACK && m.type != M_NACK) {
 		CON.seq = (CON.seq + MAX_SEQ - 1 ) % MAX_SEQ;
 		send_ack();
 		CON.seq = (CON.seq + 1) % MAX_SEQ;
